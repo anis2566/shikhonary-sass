@@ -1,0 +1,32 @@
+import { z } from "zod";
+import { nameSchema, uuidSchema } from "./shared/fields.js";
+
+/**
+ * Batch Schema
+ */
+
+export const batchFormSchema = z.object({
+  academicClassId: uuidSchema.or(z.string().min(1, "Please select a class")),
+  name: nameSchema,
+  displayName: nameSchema.optional().or(z.literal("")),
+  academicYear: z.string().min(4, "Invalid year").max(20),
+  capacity: z.coerce
+    .number()
+    .int()
+    .min(1, "Capacity must be at least 1")
+    .default(50),
+  isActive: z.boolean().default(true),
+});
+
+export type BatchFormValues = z.infer<typeof batchFormSchema>;
+
+export const defaultBatchValues: BatchFormValues = {
+  academicClassId: "",
+  name: "",
+  displayName: "",
+  academicYear: new Date().getFullYear().toString(),
+  capacity: 50,
+  isActive: true,
+};
+
+export const updateBatchSchema = batchFormSchema.partial();

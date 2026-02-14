@@ -1,0 +1,32 @@
+{
+  "name": "@workspace/email",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@react-email/components": "0.0.33",
+    "@react-email/preview-server": "^5.2.8",
+    "@react-email/render": "^2.0.4",
+    "bullmq": "^5.67.3",
+    "dotenv": "^17.2.4",
+    "ioredis": "^5.9.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.2.4",
+    "resend": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "react-email": "^5.2.8",
+    "typescript": "^5.7.3"
+  }
+}

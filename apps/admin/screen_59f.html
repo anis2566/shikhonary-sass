@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Super Admin Dashboard - Shikhonary</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0D9488", // Teal-600
+                        "primary-light": "#CCFBF1", // Teal-100
+                        "primary-dark": "#115E59", // Teal-800
+                        "accent-cyan": "#06B6D4",
+                        "surface": "#F9FAFB",
+                        "surface-hover": "#F3F4F6",
+                        "text-main": "#111827",
+                        "text-muted": "#6B7280",
+                        "glass-border": "rgba(255, 255, 255, 0.4)",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    boxShadow: {
+                        'soft-card': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.05)',
+                        'glow-teal': '0 0 20px rgba(13, 148, 136, 0.15)',
+                        'glow-blue': '0 0 20px rgba(59, 130, 246, 0.15)',
+                        'glow-purple': '0 0 20px rgba(168, 85, 247, 0.15)',
+                        'glow-amber': '0 0 20px rgba(245, 158, 11, 0.15)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .bg-mesh {
+            background-color: #F8FAFC;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(186,100%,94%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(189,100%,96%,1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(172,100%,96%,1) 0, transparent 50%);
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        }
+        .sidebar-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.6);
+        }
+        .sidebar-link.active {
+            background: linear-gradient(90deg, rgba(13, 148, 136, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+            border-left: 3px solid #0D9488;
+            color: #0F766E;
+        }
+        .sidebar-link.active .material-symbols-outlined {
+            color: #0D9488;
+        }
+        .sidebar-link:not(.active) {
+            border-left: 3px solid transparent;
+        }
+        .sidebar-link:not(.active):hover {
+            background: linear-gradient(90deg, rgba(243, 244, 246, 0.5) 0%, rgba(255, 255, 255, 0) 100%);
+            color: #0D9488;
+        }
+        .card-glow-teal { background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.08), rgba(255, 255, 255, 0) 60%), #fff; }
+        .card-glow-blue { background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), rgba(255, 255, 255, 0) 60%), #fff; }
+        .card-glow-purple { background: radial-gradient(circle at top right, rgba(168, 85, 247, 0.08), rgba(255, 255, 255, 0) 60%), #fff; }
+        .card-glow-amber { background: radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), rgba(255, 255, 255, 0) 60%), #fff; }
+        .glass-stat-item {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            transition: all 0.2s;
+        }
+        .glass-stat-item:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #CBD5E1; 
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94A3B8; 
+        }
+    </style>
+</head>
+<body class="bg-mesh font-display text-text-main h-screen flex overflow-hidden selection:bg-teal-100 selection:text-teal-800">
+<aside class="w-72 sidebar-glass flex flex-col h-full shrink-0 z-30 transition-all duration-300 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+<div class="h-24 flex items-center px-8">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-teal-500/20 text-white">
+<span class="material-symbols-outlined text-[22px]">school</span>
+</div>
+<div>
+<h1 class="font-extrabold text-xl tracking-tight text-gray-900 leading-none">Shikhonary</h1>
+<span class="text-[10px] font-semibold text-teal-600 tracking-wider uppercase">Admin Portal</span>
+</div>
+</div>
+<button class="ml-auto md:hidden text-gray-400 hover:text-gray-600">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto py-4 px-0 space-y-6">
+<div class="space-y-1">
+<p class="px-8 text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Analytics</p>
+<a class="sidebar-link active flex items-center gap-3 px-8 py-3 text-sm font-medium transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+                    Overview
+                </a>
+<a class="sidebar-link text-gray-500 flex items-center gap-3 px-8 py-3 text-sm font-medium transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] text-gray-400 group-hover:text-teal-600 transition-colors">monitoring</span>
+                    Reports
+                </a>
+</div>
+<div class="space-y-1">
+<p class="px-8 text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Management</p>
+<a class="sidebar-link text-gray-500 flex items-center gap-3 px-8 py-3 text-sm font-medium transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] text-gray-400 group-hover:text-teal-600 transition-colors">group</span>
+                    Users
+                </a>
+<div class="relative">
+<button class="w-full flex items-center justify-between text-gray-500 px-8 py-3 text-sm font-medium hover:bg-gray-50/50 hover:text-teal-700 transition-colors group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px] text-gray-400 group-hover:text-teal-600 transition-colors">apartment</span>
+                            Tenants
+                        </div>
+<span class="material-symbols-outlined text-[18px] text-gray-400 group-hover:text-teal-600 transition-colors">expand_more</span>
+</button>
+</div>
+<a class="sidebar-link text-gray-500 flex items-center gap-3 px-8 py-3 text-sm font-medium transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] text-gray-400 group-hover:text-teal-600 transition-colors">timer</span>
+                    Sessions
+                </a>
+</div>
+<div class="space-y-1">
+<p class="px-8 text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Education</p>
+<a class="sidebar-link text-gray-500 flex items-center gap-3 px-8 py-3 text-sm font-medium transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] text-gray-400 group-hover:text-teal-600 transition-colors">school</span>
+                    Academic
+                </a>
+<a class="sidebar-link text-gray-500 flex items-center gap-3 px-8 py-3 text-sm font-medium transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] text-gray-400 group-hover:text-teal-600 transition-colors">quiz</span>
+                    Question Bank
+                </a>
+</div>
+<div class="space-y-1 mt-auto">
+<p class="px-8 text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">System</p>
+<a class="sidebar-link text-gray-500 flex items-center gap-3 px-8 py-3 text-sm font-medium transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] text-gray-400 group-hover:text-teal-600 transition-colors">settings</span>
+                    Settings
+                </a>
+</div>
+</div>
+<div class="p-6 border-t border-gray-100/60 bg-white/40 backdrop-blur-sm">
+<div class="flex items-center gap-3 p-3 rounded-2xl border border-gray-200/50 bg-white/60 hover:bg-white hover:shadow-md hover:shadow-gray-200/50 cursor-pointer transition-all duration-300 group">
+<div class="w-10 h-10 rounded-full bg-gradient-to-tr from-teal-100 to-cyan-50 border-2 border-white flex items-center justify-center text-teal-700 font-bold text-sm shadow-sm">
+                    SA
+                </div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-bold text-gray-800 truncate group-hover:text-teal-700 transition-colors">Anichur Anis</p>
+<p class="text-xs text-gray-500 truncate">Super Admin</p>
+</div>
+<span class="material-symbols-outlined text-gray-400 text-[20px] group-hover:text-teal-600 transition-colors">logout</span>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col h-full overflow-hidden relative z-10">
+<header class="h-24 glass-panel sticky top-0 z-20 px-10 flex items-center justify-between">
+<div>
+<h2 class="text-2xl font-bold text-gray-800 tracking-tight">Dashboard</h2>
+<p class="text-sm text-gray-500 mt-0.5">Welcome back, Super Admin</p>
+</div>
+<div class="flex items-center gap-5">
+<div class="relative hidden lg:block group">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-teal-500 transition-colors text-[20px]">search</span>
+<input class="pl-11 pr-4 py-2.5 w-72 bg-white/50 border border-gray-200/60 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500/30 focus:bg-white transition-all placeholder-gray-400 shadow-sm" placeholder="Search tenants, users..." type="text"/>
+</div>
+<button class="relative w-11 h-11 rounded-full bg-white border border-gray-200/60 flex items-center justify-center hover:bg-gray-50 hover:shadow-md hover:shadow-gray-200/40 transition-all text-gray-500 hover:text-teal-600 group">
+<span class="material-symbols-outlined text-[24px]">notifications</span>
+<span class="absolute top-2.5 right-3 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white group-hover:scale-110 transition-transform"></span>
+</button>
+</div>
+</header>
+<div class="flex-1 overflow-y-auto p-10 scroll-smooth">
+<div class="max-w-[1600px] mx-auto space-y-10">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="card-glow-blue rounded-3xl p-7 shadow-soft-card border border-white/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+<div class="flex justify-between items-start mb-6">
+<div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[26px]">group</span>
+</div>
+<div class="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50/80 backdrop-blur-sm border border-emerald-100 px-2.5 py-1 rounded-full">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+                                12%
+                            </div>
+</div>
+<div>
+<h3 class="text-3xl font-extrabold text-gray-800 tracking-tight">12,450</h3>
+<p class="text-sm font-medium text-gray-500 mt-1">Total Users</p>
+</div>
+</div>
+<div class="card-glow-teal rounded-3xl p-7 shadow-soft-card border border-white/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+<div class="flex justify-between items-start mb-6">
+<div class="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[26px]">apartment</span>
+</div>
+<div class="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50/80 backdrop-blur-sm border border-emerald-100 px-2.5 py-1 rounded-full">
+<span class="material-symbols-outlined text-[14px]">add</span>
+                                +8
+                            </div>
+</div>
+<div>
+<h3 class="text-3xl font-extrabold text-gray-800 tracking-tight">248</h3>
+<p class="text-sm font-medium text-gray-500 mt-1">Active Tenants</p>
+</div>
+</div>
+<div class="card-glow-purple rounded-3xl p-7 shadow-soft-card border border-white/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+<div class="flex justify-between items-start mb-6">
+<div class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[26px]">school</span>
+</div>
+<div class="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50/80 backdrop-blur-sm border border-emerald-100 px-2.5 py-1 rounded-full">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+                                2.3k
+                            </div>
+</div>
+<div>
+<h3 class="text-3xl font-extrabold text-gray-800 tracking-tight">45,230</h3>
+<p class="text-sm font-medium text-gray-500 mt-1">Students Enrolled</p>
+</div>
+</div>
+<div class="card-glow-amber rounded-3xl p-7 shadow-soft-card border border-white/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+<div class="flex justify-between items-start mb-6">
+<div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[26px]">verified_user</span>
+</div>
+<div class="flex items-center gap-1.5 text-xs font-semibold text-amber-600 bg-amber-50/80 backdrop-blur-sm border border-amber-100 px-2.5 py-1 rounded-full">
+<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.6)]"></span>
+                                Live
+                            </div>
+</div>
+<div>
+<h3 class="text-3xl font-extrabold text-gray-800 tracking-tight">1,847</h3>
+<p class="text-sm font-medium text-gray-500 mt-1">Active Sessions</p>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+<div class="xl:col-span-2 bg-white/80 backdrop-blur-md rounded-3xl shadow-glass border border-white/60 overflow-hidden flex flex-col">
+<div class="p-8 border-b border-gray-100 flex justify-between items-center bg-white/40">
+<div>
+<h3 class="font-bold text-xl text-gray-800">Recent Tenants</h3>
+<p class="text-sm text-gray-500 mt-1">Latest organizations onboarded</p>
+</div>
+<a class="text-sm font-bold text-teal-600 hover:text-teal-700 hover:bg-teal-50 px-4 py-2 rounded-lg transition-colors" href="#">View all tenants</a>
+</div>
+<div class="overflow-x-auto p-2">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-gray-100/80">
+<th class="px-8 py-5 text-xs font-bold text-gray-400 uppercase tracking-wider">Tenant Identity</th>
+<th class="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-wider">Type</th>
+<th class="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-wider">Capacity</th>
+<th class="px-8 py-5 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-50/80">
+<tr class="hover:bg-teal-50/30 transition-colors group">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 text-teal-700 border border-teal-100 flex items-center justify-center font-extrabold text-sm shadow-sm">
+                                                    AH
+                                                </div>
+<div>
+<p class="font-bold text-gray-800 text-sm group-hover:text-teal-700 transition-colors">ABC High School</p>
+<p class="text-xs text-gray-400 font-mono mt-0.5">abc-high.shikhonary.com</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-600 border border-blue-100/60 uppercase tracking-wide">
+                                                School
+                                            </span>
+</td>
+<td class="px-6 py-6">
+<div class="flex items-center justify-between text-xs font-semibold text-gray-600 mb-1.5">
+<span>1,250 Students</span>
+<span class="text-gray-400">62%</span>
+</div>
+<div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-teal-400 to-teal-500 w-[62%] rounded-full shadow-[0_0_10px_rgba(20,184,166,0.3)]"></div>
+</div>
+</td>
+<td class="px-8 py-6 text-right">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                Active
+                                            </span>
+</td>
+</tr>
+<tr class="hover:bg-teal-50/30 transition-colors group">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 text-indigo-700 border border-indigo-100 flex items-center justify-center font-extrabold text-sm shadow-sm">
+                                                    XC
+                                                </div>
+<div>
+<p class="font-bold text-gray-800 text-sm group-hover:text-indigo-700 transition-colors">XYZ Coaching Center</p>
+<p class="text-xs text-gray-400 font-mono mt-0.5">xyz-coaching.shikhonary.com</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-100/60 uppercase tracking-wide">
+                                                Coaching
+                                            </span>
+</td>
+<td class="px-6 py-6">
+<div class="flex items-center justify-between text-xs font-semibold text-gray-600 mb-1.5">
+<span>320 Students</span>
+<span class="text-gray-400">64%</span>
+</div>
+<div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-indigo-400 to-indigo-500 w-[64%] rounded-full shadow-[0_0_10px_rgba(99,102,241,0.3)]"></div>
+</div>
+</td>
+<td class="px-8 py-6 text-right">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                Active
+                                            </span>
+</td>
+</tr>
+<tr class="hover:bg-teal-50/30 transition-colors group">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-50 to-amber-50 text-orange-700 border border-orange-100 flex items-center justify-center font-extrabold text-sm shadow-sm">
+                                                    JM
+                                                </div>
+<div>
+<p class="font-bold text-gray-800 text-sm group-hover:text-orange-700 transition-colors">John's Math Academy</p>
+<p class="text-xs text-gray-400 font-mono mt-0.5">johns-math.shikhonary.com</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold bg-orange-50 text-orange-600 border border-orange-100/60 uppercase tracking-wide">
+                                                Individual
+                                            </span>
+</td>
+<td class="px-6 py-6">
+<div class="flex items-center justify-between text-xs font-semibold text-gray-600 mb-1.5">
+<span>45 Students</span>
+<span class="text-gray-400">90%</span>
+</div>
+<div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-orange-400 to-orange-500 w-[90%] rounded-full shadow-[0_0_10px_rgba(249,115,22,0.3)]"></div>
+</div>
+</td>
+<td class="px-8 py-6 text-right">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                Active
+                                            </span>
+</td>
+</tr>
+<tr class="hover:bg-teal-50/30 transition-colors group">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-50 to-rose-50 text-pink-700 border border-pink-100 flex items-center justify-center font-extrabold text-sm shadow-sm">
+                                                    GS
+                                                </div>
+<div>
+<p class="font-bold text-gray-800 text-sm group-hover:text-pink-700 transition-colors">Greenfield School</p>
+<p class="text-xs text-gray-400 font-mono mt-0.5">greenfield.shikhonary.com</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-600 border border-blue-100/60 uppercase tracking-wide">
+                                                School
+                                            </span>
+</td>
+<td class="px-6 py-6">
+<div class="flex items-center justify-between text-xs font-semibold text-gray-600 mb-1.5">
+<span>890 Students</span>
+<span class="text-gray-400">89%</span>
+</div>
+<div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-pink-400 to-pink-500 w-[89%] rounded-full shadow-[0_0_10px_rgba(236,72,153,0.3)]"></div>
+</div>
+</td>
+<td class="px-8 py-6 text-right">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600 border border-gray-200">
+<span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                                                Pending
+                                            </span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="bg-white/30 backdrop-blur-md rounded-3xl border border-white/50 flex flex-col h-full overflow-hidden">
+<div class="p-8 border-b border-gray-100/50 bg-white/40">
+<h3 class="font-bold text-xl text-gray-800">Quick Stats</h3>
+<p class="text-sm text-gray-500 mt-1">Platform performance overview</p>
+</div>
+<div class="p-8 flex flex-col justify-center gap-4 h-full">
+<div class="glass-stat-item rounded-2xl p-4 flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-emerald-100/50 text-emerald-600 flex items-center justify-center">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<span class="text-sm font-semibold text-gray-600">Monthly Revenue</span>
+</div>
+<span class="text-lg font-extrabold text-gray-800">৳ 2,45,000</span>
+</div>
+<div class="glass-stat-item rounded-2xl p-4 flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-blue-100/50 text-blue-600 flex items-center justify-center">
+<span class="material-symbols-outlined">person_add</span>
+</div>
+<span class="text-sm font-semibold text-gray-600">New Signups</span>
+</div>
+<span class="text-lg font-extrabold text-gray-800">124</span>
+</div>
+<div class="glass-stat-item rounded-2xl p-4 flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-purple-100/50 text-purple-600 flex items-center justify-center">
+<span class="material-symbols-outlined">assignment</span>
+</div>
+<span class="text-sm font-semibold text-gray-600">Exams Conducted</span>
+</div>
+<span class="text-lg font-extrabold text-gray-800">1,245</span>
+</div>
+<div class="glass-stat-item rounded-2xl p-4 flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-amber-100/50 text-amber-600 flex items-center justify-center">
+<span class="material-symbols-outlined">schedule</span>
+</div>
+<span class="text-sm font-semibold text-gray-600">Avg. Session</span>
+</div>
+<span class="text-lg font-extrabold text-gray-800">42 min</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-16 text-center text-xs font-medium text-gray-400 pb-6 opacity-60">
+                © 2024 Shikhonary Systems Inc. All rights reserved.
+            </div>
+</div>
+</main>
+
+</body></html>

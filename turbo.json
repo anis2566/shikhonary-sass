@@ -5,7 +5,14 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": [
+        "DATABASE_URL",
+        "TENANT_DATABASE_URL",
+        "RESEND_API_KEY",
+        "BETTER_AUTH_SECRET",
+        "BETTER_AUTH_URL"
+      ]
     },
     "lint": {
       "dependsOn": ["^lint"]
@@ -14,8 +21,26 @@
       "dependsOn": ["^check-types"]
     },
     "dev": {
+      "env": [
+        "DATABASE_URL",
+        "TENANT_DATABASE_URL",
+        "RESEND_API_KEY",
+        "BETTER_AUTH_SECRET",
+        "BETTER_AUTH_URL"
+      ],
+      "dependsOn": ["^db:generate"],
       "cache": false,
       "persistent": true
+    },
+    "db:generate": {
+      "cache": false
+    },
+    "db:generate:tenant": {
+      "cache": false
+    },
+    "db:generate:all": {
+      "dependsOn": ["db:generate", "db:generate:tenant"],
+      "cache": false
     }
   }
 }

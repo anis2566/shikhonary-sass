@@ -1,0 +1,362 @@
+generator client {
+    provider = "prisma-client"
+    output   = "../tenant-client-types"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+// --- Models ---
+
+model Student {
+    id               String    @id @default(uuid())
+    userId           String?   @unique
+    studentId        String    @unique
+    name             String
+    email            String?
+    academicClassId  String
+    className        String?
+    batchId          String?
+    batch            Batch?    @relation(fields: [batchId], references: [id])
+    roll             String
+    group            String?
+    shift            String?
+    section          String?
+    fatherName       String?
+    motherName       String?
+    dateOfBirth      DateTime?
+    gender           String?
+    bloodGroup       String?
+    nationality      String?   @default("Bangladeshi")
+    religion         String?
+    imageUrl         String?
+    primaryPhone     String?
+    secondaryPhone   String?
+    presentAddress   String?
+    permanentAddress String?
+    isActive         Boolean   @default(true)
+    createdAt        DateTime  @default(now())
+    updatedAt        DateTime  @updatedAt
+    deletedAt        DateTime?
+
+    attempts      ExamAttempt[]
+    attendance    Attendance[]
+    answerHistory AnswerHistory[]
+
+    @@index([academicClassId])
+    @@index([batchId])
+    @@index([isActive])
+    @@index([name])
+    @@index([studentId])
+    @@index([userId])
+    @@map("student")
+}
+
+model Batch {
+    id              String   @id @default(uuid())
+    name            String
+    academicClassId String
+    className       String?
+    academicYear    String
+    capacity        Int?     @default(50)
+    currentSize     Int      @default(0)
+    isActive        Boolean  @default(true)
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+
+    students Student[]
+    exams    Exam[]
+
+    @@unique([academicClassId, name, academicYear])
+    @@index([academicClassId])
+    @@index([academicYear])
+    @@index([isActive])
+    @@map("batch")
+}
+
+model Teacher {
+    id          String    @id @default(uuid())
+    userId      String?   @unique
+    name        String
+    email       String    @unique
+    phone       String?
+    imageUrl    String?
+    subjectIds  String[]  @default([])
+    designation String?
+    department  String?
+    joinDate    DateTime?
+    isActive    Boolean   @default(true)
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+    deletedAt   DateTime?
+
+    exams Exam[]
+
+    @@index([email])
+    @@index([isActive])
+    @@index([userId])
+    @@map("teacher")
+}
+
+model Exam {
+    id           String  @id @default(uuid())
+    title        String
+    description  String?
+    instructions String?
+    type         String
+    status       String  @default("Pending")
+
+    academicClassId String?
+    subjectIds      String[] @default([])
+    chapterIds      String[] @default([])
+    topicIds        String[] @default([])
+
+    startDate DateTime? // Match introspected "startDate"
+    endDate   DateTime? // Match introspected "endDate"
+    duration  Int?      @default(0)
+
+    mcqCount Int?     @map("mcq")
+    cqCount  Int?     @map("cq")
+    mcqIds   String[] @default([])
+    cqIds    String[] @default([])
+
+    totalMarks   Float @default(0)
+    passingMarks Float @default(0)
+
+    isPublished Boolean @default(false)
+    isPublic    Boolean @default(false)
+    isActive    Boolean @default(true)
+
+    hasNegativeMark Boolean @default(false)
+    negativeMark    Float   @default(0)
+    hasRandom       Boolean @default(false)
+    hasShuffle      Boolean @default(false)
+
+    batchId   String?
+    batch     Batch?   @relation(fields: [batchId], references: [id])
+    teacherId String?
+    teacher   Teacher? @relation(fields: [teacherId], references: [id])
+
+    targetStudentIds String[] @default([])
+    totalQuestions   Int?     @map("total")
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+
+    attempts ExamAttempt[]
+
+    @@index([batchId])
+    @@index([createdAt])
+    @@index([isActive])
+    @@index([isPublic])
+    @@index([isPublished])
+    @@index([status])
+    @@index([teacherId])
+    @@map("exam")
+}
+
+model ExamAttempt {
+    id        String  @id @default(uuid())
+    examId    String
+    exam      Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
+    studentId String
+    student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+    status    String    @default("Not Started")
+    startTime DateTime?
+    endTime   DateTime?
+
+    score      Float  @default(0)
+    percentage Float  @default(0)
+    rank       Int?
+    percentile Float?
+
+    correctAnswers   Int @default(0)
+    wrongAnswers     Int @default(0)
+    skippedQuestions Int @default(0) // Match introspected "skippedQuestions"
+    totalQuestions   Int @default(0)
+
+    duration      Int? @default(0)
+    totalDuration Int?
+
+    isGraded Boolean   @default(false)
+    gradedBy String?
+    gradedAt DateTime?
+
+    tabSwitches    Int        @default(0)
+    tabSwitchTimes DateTime[] @default([])
+    ipAddress      String?
+    userAgent      String?
+
+    bestStreak    Int @default(0)
+    currentStreak Int @default(0)
+    answeredCount Int @default(0)
+
+    feedbackStatus String  @default("Pending")
+    reviewNotes    String?
+    teacherRemarks String?
+
+    answers          Json[] @default([])
+    warnings         Json[] @default([])
+    flaggedQuestions Int[]  @default([])
+
+    type String
+
+    submissionType String?
+    lastActivityAt DateTime?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    answerHistory AnswerHistory[]
+
+    @@unique([examId, studentId])
+    @@index([examId])
+    @@index([studentId])
+    @@index([status])
+    @@map("exam_attempt")
+}
+
+model AnswerHistory {
+    id        String      @id @default(uuid())
+    attemptId String      @map("attemptId")
+    attempt   ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+    studentId String      @map("studentId")
+    student   Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+    mcqId          String
+    questionNumber Int
+    selectedOption String
+    correctAnswer  String
+    isCorrect      Boolean
+    answeredAt     DateTime @default(now())
+    timeSpent      Int?
+
+    previousAnswer String?
+    isChanged      Boolean @default(false)
+    changeCount    Int     @default(0)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([attemptId])
+    @@index([studentId])
+    @@index([mcqId])
+    @@map("answer_history")
+}
+
+model Attendance {
+    id        String   @id @default(uuid())
+    studentId String
+    student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+    batchId   String?
+    date      DateTime
+    status    String
+    remarks   String?
+    markedBy  String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([studentId, date])
+    @@index([studentId])
+    @@index([batchId])
+    @@map("attendance")
+}
+
+model Announcement {
+    id          String    @id @default(uuid())
+    title       String
+    content     String
+    publishAt   DateTime?
+    expiresAt   DateTime?
+    isPublished Boolean   @default(false)
+    isPinned    Boolean   @default(false)
+    createdBy   String
+    priority    String    @default("NORMAL")
+    targetIds   String[]  @default([])
+    targetType  String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([isPublished])
+    @@index([isPinned])
+    @@map("announcement")
+}
+
+model Notification {
+    id                String    @id @default(uuid())
+    recipientId       String
+    recipientType     String
+    title             String
+    message           String
+    type              String
+    isRead            Boolean   @default(false)
+    readAt            DateTime?
+    relatedEntityType String?
+    relatedEntityId   String?
+    metadata          Json      @default("{}")
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([recipientId])
+    @@index([isRead])
+    @@map("notification")
+}
+
+model ExamAnalytics {
+    id                String   @id @default(uuid())
+    examId            String   @unique
+    totalStudents     Int      @default(0)
+    attemptedStudents Int      @default(0)
+    participationRate Float    @default(0)
+    averageScore      Float    @default(0)
+    averagePercentage Float    @default(0)
+    highestScore      Float    @default(0)
+    lowestScore       Float    @default(0)
+    medianScore       Float    @default(0)
+    scoreDistribution Json     @default("{}")
+    gradeDistribution Json     @default("{}")
+    questionAnalysis  Json[]   @default([])
+    topPerformers     String[] @default([])
+    averageTimeTaken  Float    @default(0)
+    completionRate    Float    @default(0)
+    lastCalculated    DateTime @default(now())
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+
+    @@index([examId])
+    @@map("exam_analytics")
+}
+
+model StudentAnalytics {
+    id                     String   @id @default(uuid())
+    studentId              String   @unique
+    totalExamsAttempted    Int      @default(0)
+    currentStreak          Int      @default(0)
+    bestStreak             Int      @default(0)
+    classRank              Int?
+    batchRank              Int?
+    overallRank            Int?
+    attendancePercentage   Float    @default(0)
+    averageScore           Float    @default(0)
+    averagePercentage      Float    @default(0)
+    averageTimePerQuestion Float    @default(0)
+    subjectPerformance     Json     @default("{}")
+    strongSubjects         String[] @default([])
+    weakSubjects           String[] @default([])
+    strongTopics           String[] @default([])
+    weakTopics             String[] @default([])
+    totalClassesAttended   Int      @default(0)
+    totalClassesConducted  Int      @default(0)
+    lastCalculated         DateTime @default(now())
+    createdAt              DateTime @default(now())
+    updatedAt              DateTime @updatedAt
+
+    @@index([studentId])
+    @@map("student_analytics")
+}

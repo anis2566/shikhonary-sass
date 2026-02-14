@@ -1,0 +1,56 @@
+{
+  "name": "@workspace/db",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./scripts/provision-tenant-db": {
+      "types": "./scripts/provision-tenant-db.ts",
+      "default": "./scripts/provision-tenant-db.ts"
+    },
+    "./scripts/delete-tenant-db": {
+      "types": "./scripts/delete-tenant-db.ts",
+      "default": "./scripts/delete-tenant-db.ts"
+    }
+  },
+  "scripts": {
+    "db:generate": "dotenv -e ../../.env -e .env -- prisma generate --schema=./prisma-master/schema.prisma",
+    "db:generate:tenant": "dotenv -e ../../.env -e .env -- prisma generate --schema=./prisma-tenant/schema.prisma",
+    "db:generate:all": "pnpm db:generate && pnpm db:generate:tenant",
+    "db:push": "pnpm prisma db push --schema=./prisma-master/schema.prisma --config=./prisma-master/prisma.config.ts",
+    "db:push:tenant": "pnpm prisma db push --schema=./prisma-tenant/schema.prisma --config=./prisma-tenant/prisma.config.ts",
+    "db:migrate": "pnpm prisma migrate dev --schema=./prisma-master/schema.prisma --config=./prisma-master/prisma.config.ts",
+    "db:migrate:tenant": "pnpm prisma migrate dev --schema=./prisma-tenant/schema.prisma --config=./prisma-tenant/prisma.config.ts",
+    "db:reset": "pnpm prisma migrate reset --schema=./prisma-master/schema.prisma --config=./prisma-master/prisma.config.ts",
+    "db:reset:tenant": "pnpm prisma migrate reset --schema=./prisma-tenant/schema.prisma --config=./prisma-tenant/prisma.config.ts",
+    "db:studio": "pnpm prisma studio --config=./prisma-master/prisma.config.ts",
+    "db:studio:tenant": "pnpm prisma studio --config=./prisma-tenant/prisma.config.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.8",
+    "@types/pg": "^8.16.0",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "dotenv-cli": "^11.0.0",
+    "eslint": "^9.39.2",
+    "prisma": "7.2.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
+    "@prisma/adapter-neon": "7.2.0",
+    "@prisma/adapter-pg": "7.2.0",
+    "@prisma/client": "7.2.0",
+    "@prisma/client-runtime-utils": "7.2.0",
+    "dotenv": "^17.2.3",
+    "lru-cache": "^11.2.6",
+    "mongodb": "^7.0.0",
+    "pg": "^8.17.1"
+  }
+}
