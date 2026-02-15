@@ -11,7 +11,7 @@ import {
 } from "../shared/pagination";
 
 export class AcademicTopicService {
-  constructor(private db: PrismaClient) { }
+  constructor(private db: PrismaClient) {}
 
   async list(input: {
     page: number;
@@ -115,6 +115,38 @@ export class AcademicTopicService {
           }),
         ),
       );
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
+  async bulkActive(ids: string[]): Promise<any | undefined> {
+    try {
+      return await this.db.academicTopic.updateMany({
+        where: { id: { in: ids } },
+        data: { isActive: true },
+      });
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
+  async bulkDeactive(ids: string[]): Promise<any | undefined> {
+    try {
+      return await this.db.academicTopic.updateMany({
+        where: { id: { in: ids } },
+        data: { isActive: false },
+      });
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
+  async bulkDelete(ids: string[]): Promise<any | undefined> {
+    try {
+      return await this.db.academicTopic.deleteMany({
+        where: { id: { in: ids } },
+      });
     } catch (error) {
       handlePrismaError(error);
     }

@@ -1,8 +1,17 @@
-import { enumToOptions } from "../enum-utils.js";
+import { enumToOptions } from "../enum-utils";
+
+/**
+ * Active status
+ */
+export enum ACTIVE_STATUS {
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
+}
 
 /**
  * Standardized academic levels.
  * FIXED: Removed space in "HIGHER SECONDARY" value.
+ *
  */
 export enum ACADEMIC_LEVEL {
   PRIMARY = "PRIMARY",

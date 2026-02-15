@@ -6,14 +6,19 @@ import { nameSchema, uuidSchema } from "./shared/fields.js";
  */
 
 export const academicSubjectFormSchema = z.object({
-  academicClassId: uuidSchema.or(z.string().min(1, "Please select a class")),
+  classId: uuidSchema.or(z.string().min(1, "Please select a class")),
   name: nameSchema,
   displayName: nameSchema,
   code: z
     .string()
     .max(20, "Code must be less than 20 characters")
-    .optional()
-    .or(z.literal("")),
+    .nullable()
+    .default(null),
+  group: z
+    .string()
+    .max(50, "Group must be less than 50 characters")
+    .nullable()
+    .default(null),
   position: z.coerce
     .number()
     .int()
@@ -27,12 +32,21 @@ export type AcademicSubjectFormValues = z.infer<
 >;
 
 export const defaultAcademicSubjectValues: AcademicSubjectFormValues = {
-  academicClassId: "",
+  classId: "",
   name: "",
   displayName: "",
-  code: "",
+  code: null,
+  group: null,
   position: 0,
   isActive: true,
 };
+
+export const academicSubjectSchema = academicSubjectFormSchema.extend({
+  id: z.string().uuid(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export type AcademicSubject = z.infer<typeof academicSubjectSchema>;
 
 export const updateAcademicSubjectSchema = academicSubjectFormSchema.partial();

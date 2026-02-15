@@ -30,27 +30,47 @@ export const tenantRouter = createTRPCRouter({
     .input(z.any()) // Replace with proper schema from @workspace/schema
     .mutation(async ({ ctx, input }) => {
       const service = new TenantService(ctx.db);
-      return await service.create(input);
+      const data = await service.create(input);
+      return {
+        success: true,
+        message: "Tenant created successfully",
+        data,
+      };
     }),
 
   update: baseMutationProcedure
     .input(z.object({ id: z.string(), data: z.any() }))
     .mutation(async ({ ctx, input }) => {
       const service = new TenantService(ctx.db);
-      return await service.update(input.id, input.data);
+      const data = await service.update(input.id, input.data);
+      return {
+        success: true,
+        message: "Tenant updated successfully",
+        data,
+      };
     }),
 
   delete: baseMutationProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const service = new TenantService(ctx.db);
-      return await service.delete(input.id);
+      const data = await service.delete(input.id);
+      return {
+        success: true,
+        message: "Tenant deleted successfully",
+        data,
+      };
     }),
 
   toggleStatus: baseMutationProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const service = new TenantService(ctx.db);
-      return await service.toggleStatus(input.id);
+      const data = await service.toggleStatus(input.id);
+      return {
+        success: true,
+        message: "Tenant status updated successfully",
+        data,
+      };
     }),
 } satisfies TRPCRouterRecord);

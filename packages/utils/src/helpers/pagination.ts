@@ -1,7 +1,7 @@
 /**
  * Pagination and query parsing logic
  */
-import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from "../constants/pagination.js";
+import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from "../constants/pagination";
 
 /**
  * Calculates Prisma skip/take and metadata for pagination

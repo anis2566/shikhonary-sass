@@ -1,7 +1,7 @@
 /**
  * Shared logic for ID generation
  */
-import { generateShortId } from "./crypto.js";
+import { generateShortId } from "./crypto";
 
 /**
  * Generates a student ID with year and sequence
@@ -16,4 +16,4 @@ export const generateStudentId = (prefix: string = "STU") => {
 /**
  * Generates a tenant slug from name
  */
-export { slugify as generateTenantSlug } from "./string.js";
+export { slugify as generateTenantSlug } from "./string";

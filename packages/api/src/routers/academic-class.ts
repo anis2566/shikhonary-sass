@@ -5,13 +5,13 @@ import {
   baseMutationProcedure,
 } from "../trpc/index";
 import { AcademicClassService } from "../services/academic-class.service";
-import { baseListInputSchema } from "../shared/filters";
+import { baseListInputSchema, zNullishString } from "../shared/filters";
 
 export const academicClassRouter = createTRPCRouter({
   list: adminProcedure
     .input(
       baseListInputSchema.extend({
-        level: z.string().optional(),
+        level: zNullishString,
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -23,35 +23,92 @@ export const academicClassRouter = createTRPCRouter({
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const service = new AcademicClassService(ctx.db);
-      return await service.getById(input.id);
+      const data = await service.getById(input.id);
+      return {
+        success: true,
+        data,
+      };
     }),
 
   create: baseMutationProcedure
     .input(z.any()) // Use AcademicClassSchema from @workspace/schema
     .mutation(async ({ ctx, input }) => {
       const service = new AcademicClassService(ctx.db);
-      return await service.create(input);
+      const data = await service.create(input);
+      return {
+        success: true,
+        message: "Academic class created successfully",
+        data,
+      };
     }),
 
   update: baseMutationProcedure
     .input(z.object({ id: z.string(), data: z.any() }))
     .mutation(async ({ ctx, input }) => {
       const service = new AcademicClassService(ctx.db);
-      return await service.update(input.id, input.data);
+      const data = await service.update(input.id, input.data);
+      return {
+        success: true,
+        message: "Academic class updated successfully",
+        data,
+      };
     }),
 
   delete: baseMutationProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const service = new AcademicClassService(ctx.db);
-      return await service.delete(input.id);
+      const data = await service.delete(input.id);
+      return {
+        success: true,
+        message: "Academic class deleted successfully",
+        data,
+      };
+    }),
+
+  bulkActive: baseMutationProcedure
+    .input(z.object({ ids: z.array(z.string()) }))
+    .mutation(async ({ ctx, input }) => {
+      const service = new AcademicClassService(ctx.db);
+      await service.bulkActive(input.ids);
+      return {
+        success: true,
+        message: "Academic classes activated successfully",
+      };
+    }),
+
+  bulkDeactive: baseMutationProcedure
+    .input(z.object({ ids: z.array(z.string()) }))
+    .mutation(async ({ ctx, input }) => {
+      const service = new AcademicClassService(ctx.db);
+      await service.bulkDeactive(input.ids);
+      return {
+        success: true,
+        message: "Academic classes deactivated successfully",
+      };
+    }),
+
+  bulkDelete: baseMutationProcedure
+    .input(z.object({ ids: z.array(z.string()) }))
+    .mutation(async ({ ctx, input }) => {
+      const service = new AcademicClassService(ctx.db);
+      await service.bulkDelete(input.ids);
+      return {
+        success: true,
+        message: "Academic classes deleted successfully",
+      };
     }),
 
   reorder: baseMutationProcedure
     .input(z.array(z.object({ id: z.string(), position: z.number() })))
     .mutation(async ({ ctx, input }) => {
       const service = new AcademicClassService(ctx.db);
-      return await service.reorder(input);
+      const data = await service.reorder(input);
+      return {
+        success: true,
+        message: "Classes reordered successfully",
+        data,
+      };
     }),
 
   getStats: adminProcedure.query(async ({ ctx }) => {

@@ -6,7 +6,7 @@ import type { BetterAuthOptions } from "better-auth";
  * Universal Better Auth configuration
  * This providing the core options and database adapter.
  */
-export const getAuthConfig = (): BetterAuthOptions => {
+export const getAuthConfig = () => {
   return {
     database: prismaAdapter(prisma, {
       provider: "postgresql",

@@ -6,14 +6,14 @@ import type { AuthUser } from "../types";
  * Middleware logic to protect routes.
  * Returns a redirect URL or NextResponse.
  */
-export async function withAuth(req: NextRequest) {
+export async function withAuth(req: NextRequest, signInPath = "/auth/sign-in") {
   const session = await auth.api.getSession({
     headers: req.headers,
   });
 
   if (!session) {
     const url = req.nextUrl.clone();
-    url.pathname = "/sign-in";
+    url.pathname = signInPath;
     url.searchParams.set("callbackUrl", req.nextUrl.pathname);
     return NextResponse.redirect(url);
   }

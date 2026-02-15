@@ -1,24 +1,17 @@
 "use client";
 
-import * as React from "react";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
-
-import { Toaster } from "@workspace/ui/components/sonner";
-import { TooltipProvider } from "@workspace/ui/components/tooltip";
+import { ThemeProvider } from "next-themes";
+import { Toaster } from "sonner";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <NextThemesProvider
+    <ThemeProvider
       attribute="class"
-      defaultTheme="system"
-      enableSystem
+      defaultTheme="light"
       disableTransitionOnChange
-      enableColorScheme
     >
-      <TooltipProvider>
-        {children}
-        <Toaster />
-      </TooltipProvider>
-    </NextThemesProvider>
+      {children}
+      <Toaster position="top-center" richColors />
+    </ThemeProvider>
   );
 }

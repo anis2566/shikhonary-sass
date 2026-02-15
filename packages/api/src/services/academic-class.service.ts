@@ -1,5 +1,5 @@
 import { type PrismaClient } from "@workspace/db";
-import { type AcademicClass } from "@workspace/schema";
+import { type AcademicClass, type AcademicSubject } from "@workspace/schema";
 import { handlePrismaError } from "../middleware/error-handler";
 import {
   buildPagination,
@@ -61,16 +61,37 @@ export class AcademicClassService {
     }
   }
 
-  async getById(id: string): Promise<any | null | undefined> {
+  async getById(id: string): Promise<
+    | (AcademicClass & {
+        subjects: (AcademicSubject & {
+          _count: {
+            chapters: number;
+            mcqs: number;
+            cqs: number;
+          };
+        })[];
+      })
+    | null
+    | undefined
+  > {
     try {
-      return await this.db.academicClass.findUnique({
+      return (await this.db.academicClass.findUnique({
         where: { id },
         include: {
           subjects: {
             orderBy: { position: "asc" },
+            include: {
+              _count: {
+                select: {
+                  chapters: true,
+                  mcqs: true,
+                  cqs: true,
+                },
+              },
+            },
           },
         },
-      });
+      })) as any;
     } catch (error) {
       handlePrismaError(error);
     }
@@ -129,19 +150,53 @@ export class AcademicClassService {
     }
   }
 
+  async bulkActive(ids: string[]): Promise<any | undefined> {
+    try {
+      return await this.db.academicClass.updateMany({
+        where: { id: { in: ids } },
+        data: { isActive: true },
+      });
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
+  async bulkDeactive(ids: string[]): Promise<any | undefined> {
+    try {
+      return await this.db.academicClass.updateMany({
+        where: { id: { in: ids } },
+        data: { isActive: false },
+      });
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
+  async bulkDelete(ids: string[]): Promise<any | undefined> {
+    try {
+      return await this.db.academicClass.deleteMany({
+        where: { id: { in: ids } },
+      });
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
   async getStats(): Promise<
-    { total: number; active: number; inactive: number } | undefined
+    | { total: number; active: number; inactive: number; totalSubject: number }
+    | undefined
   > {
     console.log(
       "[AcademicClassService] getStats called. DB instance keys:",
       Object.keys(this.db).filter((k) => !k.startsWith("_")),
     );
     try {
-      const [total, active] = await Promise.all([
+      const [total, active, totalSubject] = await Promise.all([
         this.db.academicClass.count(),
         this.db.academicClass.count({ where: { isActive: true } }),
+        this.db.academicSubject.count(),
       ]);
-      return { total, active, inactive: total - active };
+      return { total, active, inactive: total - active, totalSubject };
     } catch (error) {
       handlePrismaError(error);
     }

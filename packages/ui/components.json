@@ -1,6 +1,6 @@
 {
   "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "radix-nova",
+  "style": "new-york",
   "rsc": true,
   "tsx": true,
   "tailwind": {
@@ -15,9 +15,6 @@
     "utils": "@workspace/ui/lib/utils",
     "hooks": "@workspace/ui/hooks",
     "lib": "@workspace/ui/lib",
-    "ui": "@workspace/ui/components",
-    "shared": "@workspace/ui/shared",
-    "composite": "@workspace/ui/composite",
-    "providers": "@workspace/ui/providers"
+    "ui": "@workspace/ui/components"
   }
 }

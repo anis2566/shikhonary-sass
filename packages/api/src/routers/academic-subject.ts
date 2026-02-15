@@ -6,13 +6,17 @@ import {
   baseMutationProcedure,
 } from "../trpc/index";
 import { AcademicSubjectService } from "../services/academic-subject.service";
-import { baseListInputSchema } from "../shared/filters";
+import {
+  baseListInputSchema,
+  zNullishString,
+  zNullishBoolean,
+} from "../shared/filters";
 
 export const academicSubjectRouter = createTRPCRouter({
   list: adminProcedure
     .input(
       baseListInputSchema.extend({
-        classId: z.string().optional(),
+        classId: zNullishString,
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -31,32 +35,52 @@ export const academicSubjectRouter = createTRPCRouter({
     .input(z.any())
     .mutation(async ({ ctx, input }) => {
       const service = new AcademicSubjectService(ctx.db);
-      return await service.create(input);
+      const data = await service.create(input);
+      return {
+        success: true,
+        message: "Subject created successfully",
+        data,
+      };
     }),
 
   update: baseMutationProcedure
     .input(z.object({ id: z.string(), data: z.any() }))
     .mutation(async ({ ctx, input }) => {
       const service = new AcademicSubjectService(ctx.db);
-      return await service.update(input.id, input.data);
+      const data = await service.update(input.id, input.data);
+      return {
+        success: true,
+        message: "Subject updated successfully",
+        data,
+      };
     }),
 
   delete: baseMutationProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const service = new AcademicSubjectService(ctx.db);
-      return await service.delete(input.id);
+      const data = await service.delete(input.id);
+      return {
+        success: true,
+        message: "Subject deleted successfully",
+        data,
+      };
     }),
 
   reorder: baseMutationProcedure
     .input(z.array(z.object({ id: z.string(), position: z.number() })))
     .mutation(async ({ ctx, input }) => {
       const service = new AcademicSubjectService(ctx.db);
-      return await service.reorder(input);
+      const data = await service.reorder(input);
+      return {
+        success: true,
+        message: "Subjects reordered successfully",
+        data,
+      };
     }),
 
   getStats: adminProcedure
-    .input(z.object({ classId: z.string().optional() }))
+    .input(z.object({ classId: zNullishString }))
     .query(async ({ ctx, input }) => {
       const service = new AcademicSubjectService(ctx.db);
       return await service.getStats(input.classId);

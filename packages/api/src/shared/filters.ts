@@ -20,15 +20,42 @@ export const sortInputSchema = z.object({
 });
 
 /**
+ * Helpers to handle nullish values from nuqs by converting null to undefined.
+ * This ensures compatibility with the service layer which expects optional (undefined) rather than null.
+ */
+export const zNullishString = z.preprocess(
+  (v) => (v === null ? undefined : v),
+  z.string().optional(),
+) as z.ZodType<string | undefined, z.ZodTypeDef, string | null | undefined>;
+
+export const zNullishBoolean = z.preprocess((val) => {
+  if (val === "ACTIVE" || val === "true" || val === true) return true;
+  if (val === "INACTIVE" || val === "false" || val === false) return false;
+  if (val === "" || val === null || val === undefined) return undefined;
+  return val;
+}, z.boolean().optional()) as z.ZodType<
+  boolean | undefined,
+  z.ZodTypeDef,
+  string | boolean | null | undefined
+>;
+
+/**
  * Combined base list input schema for most list endpoints
  */
 export const baseListInputSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
-  search: z.string().optional(),
-  sortBy: z.string().optional(),
-  sortOrder: z.enum(["asc", "desc"]).default("desc"),
-  isActive: z.coerce.boolean().optional(),
+  search: zNullishString,
+  sortBy: zNullishString,
+  sortOrder: z.preprocess(
+    (v) => (v === null ? undefined : v),
+    z.enum(["asc", "desc"]).optional().default("desc"),
+  ) as z.ZodType<
+    "asc" | "desc",
+    z.ZodTypeDef,
+    "asc" | "desc" | null | undefined
+  >,
+  isActive: zNullishBoolean,
 });
 
 export type FilterInput = z.infer<typeof filterInputSchema>;

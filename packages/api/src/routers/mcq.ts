@@ -6,15 +6,15 @@ import {
   baseMutationProcedure,
 } from "../trpc/index";
 import { McqService } from "../services/mcq.service";
-import { baseListInputSchema } from "../shared/filters";
+import { baseListInputSchema, zNullishString } from "../shared/filters";
 
 export const mcqRouter = createTRPCRouter({
   list: adminProcedure
     .input(
       baseListInputSchema.extend({
-        subjectId: z.string().optional(),
-        chapterId: z.string().optional(),
-        type: z.string().optional(),
+        subjectId: zNullishString,
+        chapterId: zNullishString,
+        type: zNullishString,
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -33,32 +33,52 @@ export const mcqRouter = createTRPCRouter({
     .input(z.any())
     .mutation(async ({ ctx, input }) => {
       const service = new McqService(ctx.db);
-      return await service.create(input);
+      const data = await service.create(input);
+      return {
+        success: true,
+        message: "MCQ created successfully",
+        data,
+      };
     }),
 
   update: baseMutationProcedure
     .input(z.object({ id: z.string(), data: z.any() }))
     .mutation(async ({ ctx, input }) => {
       const service = new McqService(ctx.db);
-      return await service.update(input.id, input.data);
+      const data = await service.update(input.id, input.data);
+      return {
+        success: true,
+        message: "MCQ updated successfully",
+        data,
+      };
     }),
 
   delete: baseMutationProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const service = new McqService(ctx.db);
-      return await service.delete(input.id);
+      const data = await service.delete(input.id);
+      return {
+        success: true,
+        message: "MCQ deleted successfully",
+        data,
+      };
     }),
 
   bulkDelete: baseMutationProcedure
     .input(z.object({ ids: z.array(z.string()) }))
     .mutation(async ({ ctx, input }) => {
       const service = new McqService(ctx.db);
-      return await service.bulkDelete(input.ids);
+      const data = await service.bulkDelete(input.ids);
+      return {
+        success: true,
+        message: "MCQs deleted successfully",
+        data,
+      };
     }),
 
   getStats: adminProcedure
-    .input(z.object({ chapterId: z.string().optional() }))
+    .input(z.object({ chapterId: zNullishString }))
     .query(async ({ ctx, input }) => {
       const service = new McqService(ctx.db);
       return await service.getStats(input.chapterId);

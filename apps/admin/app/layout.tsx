@@ -1,15 +1,26 @@
-import { Manrope } from "next/font/google";
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 
 import "@workspace/ui/globals.css";
-
 import { Providers } from "@/components/providers";
 import { TRPCReactProvider } from "@/trpc/react";
+import { Toaster } from "sonner";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
-const fontSans = Manrope({
+const fontSans = Geist({
   subsets: ["latin"],
   variable: "--font-sans",
-  weight: ["200", "300", "400", "500", "600", "700", "800"],
 });
+
+const fontMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+});
+
+export const metadata: Metadata = {
+  title: "Shikhonary Admin",
+  description: "The administrative dashboard for Shikhonary",
+};
 
 export default function RootLayout({
   children,
@@ -18,15 +29,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1"
-        />
-      </head>
-      <body className={`${fontSans.variable} font-sans antialiased `}>
+      <body
+        className={`${fontSans.variable} ${fontMono.variable} font-sans antialiased `}
+      >
         <TRPCReactProvider>
-          <Providers>{children}</Providers>
+          <NuqsAdapter>
+            <Providers>
+              {children}
+              <Toaster />
+            </Providers>
+          </NuqsAdapter>
         </TRPCReactProvider>
       </body>
     </html>

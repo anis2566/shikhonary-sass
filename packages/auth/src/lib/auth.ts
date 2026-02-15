@@ -7,7 +7,7 @@ const config = getAuthConfig();
 /**
  * Better Auth Server Instance
  */
-export const auth: Auth = betterAuth({
+export const auth = betterAuth({
   ...config,
   plugins: [nextCookies()],
   emailAndPassword: {

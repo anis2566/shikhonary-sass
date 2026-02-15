@@ -1,0 +1,162 @@
+import { parseAsString, parseAsInteger, parseAsStringEnum } from "nuqs/server";
+import {
+  DEFAULT_PAGE,
+  DEFAULT_PAGE_SIZE,
+  ACADEMIC_LEVEL,
+  SORT_WITH_POSITION,
+  TENANT_TYPE,
+  MCQ_TYPE,
+} from "@workspace/utils/constants";
+
+// Common constants if not found in utils
+export const ACTIVE_STATUS = ["ACTIVE", "INACTIVE"];
+export const SORT_ORDER = ["asc", "desc"];
+
+/**
+ * Base pagination and search filters used across most list endpoints
+ */
+export const baseFilterSchema = {
+  search: parseAsString.withDefault("").withOptions({ clearOnDefault: true }),
+  page: parseAsInteger
+    .withDefault(DEFAULT_PAGE)
+    .withOptions({ clearOnDefault: true }),
+  limit: parseAsInteger
+    .withDefault(DEFAULT_PAGE_SIZE)
+    .withOptions({ clearOnDefault: true }),
+  sortBy: parseAsString
+    .withDefault("createdAt")
+    .withOptions({ clearOnDefault: true }),
+  sortOrder: parseAsStringEnum(["asc", "desc"])
+    .withDefault("desc")
+    .withOptions({ clearOnDefault: true }),
+};
+
+/**
+ * Academic Class Filters
+ */
+export const academicClassFilterSchema = {
+  ...baseFilterSchema,
+  level: parseAsStringEnum(Object.values(ACADEMIC_LEVEL)).withOptions({
+    clearOnDefault: true,
+  }),
+  isActive: parseAsStringEnum(ACTIVE_STATUS).withOptions({
+    clearOnDefault: true,
+  }),
+  sort: parseAsStringEnum(Object.values(SORT_WITH_POSITION)).withOptions({
+    clearOnDefault: true,
+  }),
+};
+
+/**
+ * Academic Subject Filters
+ */
+export const academicSubjectFilterSchema = {
+  ...baseFilterSchema,
+  classId: parseAsString.withOptions({ clearOnDefault: true }),
+  isActive: parseAsStringEnum(ACTIVE_STATUS).withOptions({
+    clearOnDefault: true,
+  }),
+  sort: parseAsStringEnum(Object.values(SORT_WITH_POSITION)).withOptions({
+    clearOnDefault: true,
+  }),
+};
+
+/**
+ * Academic Chapter Filters
+ */
+export const academicChapterFilterSchema = {
+  ...baseFilterSchema,
+  subjectId: parseAsString.withOptions({ clearOnDefault: true }),
+  isActive: parseAsStringEnum(ACTIVE_STATUS).withOptions({
+    clearOnDefault: true,
+  }),
+  sort: parseAsStringEnum(Object.values(SORT_WITH_POSITION)).withOptions({
+    clearOnDefault: true,
+  }),
+};
+
+/**
+ * Academic Topic Filters
+ */
+export const academicTopicFilterSchema = {
+  ...baseFilterSchema,
+  chapterId: parseAsString.withOptions({ clearOnDefault: true }),
+  isActive: parseAsStringEnum(ACTIVE_STATUS).withOptions({
+    clearOnDefault: true,
+  }),
+  sort: parseAsStringEnum(Object.values(SORT_WITH_POSITION)).withOptions({
+    clearOnDefault: true,
+  }),
+};
+
+/**
+ * Academic Subtopic Filters
+ */
+export const academicSubTopicFilterSchema = {
+  ...baseFilterSchema,
+  topicId: parseAsString.withOptions({ clearOnDefault: true }),
+  isActive: parseAsStringEnum(ACTIVE_STATUS).withOptions({
+    clearOnDefault: true,
+  }),
+  sort: parseAsStringEnum(Object.values(SORT_WITH_POSITION)).withOptions({
+    clearOnDefault: true,
+  }),
+};
+
+/**
+ * MCQ Filters
+ */
+export const mcqFilterSchema = {
+  ...baseFilterSchema,
+  subjectId: parseAsString.withOptions({ clearOnDefault: true }),
+  chapterId: parseAsString.withOptions({ clearOnDefault: true }),
+  topicId: parseAsString.withOptions({ clearOnDefault: true }),
+  subtopicId: parseAsString.withOptions({ clearOnDefault: true }),
+  type: parseAsStringEnum(Object.values(MCQ_TYPE)).withOptions({
+    clearOnDefault: true,
+  }),
+};
+
+/**
+ * Student Filters
+ */
+export const studentFilterSchema = {
+  ...baseFilterSchema,
+  batchId: parseAsString.withOptions({ clearOnDefault: true }),
+  classId: parseAsString.withOptions({ clearOnDefault: true }),
+  isActive: parseAsStringEnum(ACTIVE_STATUS).withOptions({
+    clearOnDefault: true,
+  }),
+};
+
+/**
+ * Batch Filters
+ */
+export const batchFilterSchema = {
+  ...baseFilterSchema,
+  classId: parseAsString.withOptions({ clearOnDefault: true }),
+  academicYear: parseAsString.withOptions({ clearOnDefault: true }),
+  isActive: parseAsStringEnum(ACTIVE_STATUS).withOptions({
+    clearOnDefault: true,
+  }),
+};
+
+/**
+ * Tenant Filters
+ */
+export const tenantFilterSchema = {
+  ...baseFilterSchema,
+  type: parseAsStringEnum(Object.values(TENANT_TYPE)).withOptions({
+    clearOnDefault: true,
+  }),
+  isActive: parseAsStringEnum(ACTIVE_STATUS).withOptions({
+    clearOnDefault: true,
+  }),
+};
+
+/**
+ * Subscription Plan Filters
+ */
+export const subscriptionPlanFilterSchema = {
+  ...baseFilterSchema,
+};

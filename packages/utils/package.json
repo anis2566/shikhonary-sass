@@ -15,6 +15,7 @@
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/node": "^22.10.5",
     "eslint": "^9.39.2",
     "typescript": "^5.9.3",
     "@workspace/eslint-config": "workspace:*",

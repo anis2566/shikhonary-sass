@@ -1,4 +1,4 @@
-import { enumToOptions } from "../enum-utils.js";
+import { enumToOptions } from "../enum-utils";
 
 /**
  * Daily attendance status for students/staff

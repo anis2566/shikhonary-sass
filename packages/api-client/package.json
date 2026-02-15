@@ -1,0 +1,52 @@
+{
+  "name": "@workspace/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./client": {
+      "types": "./src/client.tsx",
+      "default": "./src/client.tsx"
+    },
+    "./query-client": {
+      "types": "./src/query-client.ts",
+      "default": "./src/query-client.ts"
+    },
+    "./filters": {
+      "types": "./src/filters/client.ts",
+      "default": "./src/filters/client.ts"
+    },
+    "./filters-server": {
+      "types": "./src/filters/server.ts",
+      "default": "./src/filters/server.ts"
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf .turbo node_modules",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.66.0",
+    "@trpc/client": "^11.6.0",
+    "@trpc/react-query": "^11.6.0",
+    "@trpc/server": "^11.6.0",
+    "@trpc/tanstack-react-query": "^11.10.0",
+    "@workspace/api": "workspace:*",
+    "@workspace/utils": "workspace:*",
+    "nuqs": "^2.8.8",
+    "react": "^19.0.0",
+    "sonner": "^1.4.41",
+    "superjson": "^2.2.2"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "typescript": "^5.5.0"
+  }
+}

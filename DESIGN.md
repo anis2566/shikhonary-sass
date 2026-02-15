@@ -1,49 +1,84 @@
-# Design System: Admin Login - Light Mode (Super-Admin Dashboard)
+# Shikhonary Admin Design System - Premium Dark Mode
 
-**Project ID:** 11968795511017049358
+**Source Screen ID**: `29a67e3a9fe54b2893cef88f35f0b381`
+**Theme Title**: Super-Admin Premium Dark Aesthetics
 
-## 1. Visual Theme & Atmosphere
+## 1. Visual Theme: "Obsidian Professionalism"
 
-The design radiates a **"Premium Airy Professionalism"** vibe. It utilizes extensive **Glassmorphism** (frosted glass effects) combined with a soft, multi-layered mesh background to create a sense of depth and modernity. The aesthetic is clean, high-density yet spacious, prioritizing clarity and a "state-of-the-art" software feel. It feels breathable, futuristic, and highly organized.
+The design leverages a deep, dark obsidian base with vibrant teal-cyan accents and subtle violet gradients. It creates a high-contrast, premium experience emphasizing depth through glassmorphism and soft glows.
 
-## 2. Color Palette & Roles
+## 2. Color Palette
 
-- **Deep Muted Teal (#0D9488):** The Primary brand color. Used for primary actions, active navigation states, and key icons.
-- **Soft Mint Teal (#CCFBF1):** Primary Light role. Used for selection backgrounds, subtle accents, and secondary highlights.
-- **Midnight Teal-Slate (#115E59):** Primary Dark role. Used for hover states on primary elements or high-contrast text.
-- **Vibrant Electric Cyan (#06B6D4):** Accent color. Used in gradients (e.g., logo, buttons) to add energy and a tech-forward feel.
-- **Pristine Cloud White (#F9FAFB):** Surface color. The base for cards and secondary panels.
-- **Foggy Slate (#F3F4F6):** Surface Hover color. Used for subtle background changes during interaction.
-- **Onyx Black-Gray (#111827):** Main Text color. Used for primary headings and critical information.
-- **Cool Stone Gray (#6B7280):** Muted Text color. Used for descriptions, labels, and secondary information.
-- **Mesh Slate-Blue (#F8FAFC):** The foundational background color, supporting the light blue/teal radial gradients.
+### Base Colors
 
-## 3. Typography Rules
+- **Main Background (Obsidian)**: `#0A0514`
+- **Surface (Luxury Dark)**: `#0F0B1E`
+- **Sidebar Background**: `#0B0C1E`
+- **Panel Background (Frosted)**: `rgba(20, 20, 35, 0.4)`
+- **Glass Base**: `rgba(13, 11, 22, 0.6)`
 
-- **Primary Font:** **Manrope** - A modern geometric sans-serif that balances warmth with technical precision.
-- **Headings:** Use `Extrabold` (800) for main numbers and `Bold` (700) for section titles. Tracking is set to "tight" for a punchy, modern look.
-- **Body & Labels:** `Medium` (500) or `Semibold` (600) weight.
-- **System Labels:** Small caps/uppercase labels use `Bold` weight with extra letter spacing (`tracking-widest`) to signify hierarchy.
+### Accents & Indicators
 
-## 4. Component Stylings
+- **Primary Teal Cyan**: `#22d3ee`
+- **Deep Violet**: `#5b21b6`
+- **Text (High Contrast)**: `#f3f4f6`
+- **Text (Secondary/Muted)**: `rgba(199, 210, 254, 0.6)` (indigo-200/60)
 
-- **Buttons:**
-  - **Shape:** Generously rounded corners (`rounded-xl` / 12px).
-  - **Behavior:** Often feature linear gradients (Teal to Cyan) with subtle outer glows (`shadow-teal-500/20`).
-- **Cards & Containers:**
-  - **Shape:** Heavily rounded corners (`rounded-3xl` / 24px).
-  - **Styling:** Semi-transparent white backgrounds (`bg-white/80`) with frosted glass effects (`backdrop-blur-md`).
-  - **Borders:** Fine, light borders (`border-white/60`) to define edges against the mesh background.
-  - **Elevations:** "Whisper-soft" diffused shadows (`shadow-soft-card`: `0 4px 20px -2px rgba(0, 0, 0, 0.05)`).
-- **Inputs/Forms:**
-  - **Styling:** Semi-transparent backgrounds (`bg-white/50`), `rounded-xl` corners.
-  - **Interaction:** Focus states use a soft teal ring (`focus:ring-teal-500/20`) and clear border transitions.
-- **Sidebar:**
-  - **Styling:** Deep frosted glass (`backdrop-blur-20px`) with a high-transparency white base (`rgba(255, 255, 255, 0.85)`). Active links use a gradient fade-out and a solid left-border teal accent.
+### Borders & Dividers
 
-## 5. Layout Principles
+- **Subtle White Outlines**: `rgba(255, 255, 255, 0.05)` (sidebar-border)
+- **Glass Borders**: `rgba(255, 255, 255, 0.08)`
+- **Panel Borders**: `rgba(255, 255, 255, 0.12)`
 
-- **Whitespace:** Aggressive use of padding (`p-10`) and large gaps (`gap-8`, `gap-10`) to ensure information density doesn't compromise readability.
-- **Grid Alignment:** Standard 4-column stat grid for dashboards, transitioning to a split 2:1 ratio for tables and secondary widgets.
-- **Consistency:** Every interactive element uses `transition-all duration-300` for smooth, micro-animated feedback.
-- **Hierarchy:** Information is layered using Z-index for the glass floating header (`z-20`) and sidebar (`z-30`) to maintain context while scrolling.
+## 3. Typography
+
+- **Core Font**: `Manrope`
+- **Weights**: 300, 400, 500, 600, 700, 800
+- **Scale**:
+  - Dashboard Title: `24px` / `text-2xl`
+  - Body Text: `14px` / `text-sm`
+  - Small/Muted: `12px` / `text-xs`
+  - Labels: `10px` / `tracking-wider uppercase`
+
+## 4. Component Styling
+
+### Sidebar (Aside)
+
+- **Width**: `16rem` (w-64)
+- **Background**: `#0B0C1E`
+- **Active State**:
+  - Background: `rgba(34, 211, 238, 0.1)` (teal-cyan/10)
+  - Text: `#22d3ee` (teal-cyan)
+  - Border: `1px solid rgba(34, 211, 238, 0.2)`
+  - Shadow: `0 0 15px rgba(34, 211, 238, 0.1)`
+- **Hover State**:
+  - Background: `rgba(255, 255, 255, 0.05)` (white/5)
+  - Transition: `0.2s ease`
+
+### Dashboard Header
+
+- **Height**: `5rem` (h-20)
+- **Background**: `rgba(10, 5, 20, 0.4)` (obsidian/40) with `backdrop-blur-md`
+- **Search Input**:
+  - Background: `rgba(255, 255, 255, 0.05)`
+  - Border: `rgba(255, 255, 255, 0.1)`
+  - Focus Ring: `rgba(34, 211, 238, 0.6)`
+
+### Metric Cards
+
+- **Background**: `linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%)`
+- **Borders**: `1px solid rgba(255, 255, 255, 0.1)`
+- **Effects**: `backdrop-blur(16px)`
+- **Shadow**: `0 20px 40px -10px rgba(0,0,0,0.4)`
+- **Hover**:
+  - Border Color: `rgba(34, 211, 238, 0.4)`
+  - TranslateY: `-4px`
+  - Shadow: `0 25px 50px -12px rgba(0,0,0,0.6), 0 0 15px rgba(34, 211, 238, 0.15)`
+
+## 5. Layout & Effects
+
+- **Background Gradient**: `linear-gradient(160deg, #0f0b1e 0%, #050505 100%)`
+- **Mesh Background**:
+  - Top Right: `radial-gradient(circle at top right, rgba(34, 211, 238, 0.15), transparent 40%)`
+  - Bottom Left: `radial-gradient(circle at bottom left, rgba(91, 33, 182, 0.2), transparent 40%)`
+- **Patterns**: Bengali Pattern SVG at `0.03` opacity.

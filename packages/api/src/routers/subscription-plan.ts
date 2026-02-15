@@ -30,6 +30,11 @@ export const subscriptionPlanRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const service = new SubscriptionService(ctx.db);
-      return await service.assignPlan(input);
+      const data = await service.assignPlan(input);
+      return {
+        success: true,
+        message: "Plan assigned successfully",
+        data,
+      };
     }),
 } satisfies TRPCRouterRecord);
