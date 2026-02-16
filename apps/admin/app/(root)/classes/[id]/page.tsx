@@ -17,6 +17,14 @@ const ClassViewPage = async ({ params }: Props) => {
   const { id } = await params;
 
   prefetch(trpc.academicClass.getById.queryOptions({ id }));
+  prefetch(trpc.academicClass.getDetailedStats.queryOptions({ id }));
+  prefetch(trpc.academicClass.getStatisticsData.queryOptions({ id }));
+  prefetch(
+    trpc.academicClass.getRecentTopics.queryOptions({
+      classId: id,
+      limit: 4,
+    }),
+  );
 
   return (
     <HydrateClient>

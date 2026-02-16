@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TENANT_SUBSCRIPTION_PLAN } from "@workspace/utils/constants";
-import { nameSchema } from "./shared/fields.js";
+import { nameSchema } from "./shared/fields";
 
 /**
  * Subscription Plan Schema

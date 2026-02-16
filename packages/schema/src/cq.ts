@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { uuidSchema } from "./shared/fields.js";
+import { uuidSchema } from "./shared/fields";
 
 /**
  * CQ (Creative Question) Schema
@@ -19,14 +19,9 @@ export const cqFormSchema = z.object({
   subjectId: uuidSchema.or(z.string().min(1, "Subject is required")),
   topicId: uuidSchema.optional().or(z.literal("")),
   subTopicId: uuidSchema.optional().or(z.literal("")),
-  isMath: z.boolean().default(false),
-  reference: z.array(z.string()).optional().default([]),
-  session: z.coerce
-    .number()
-    .int()
-    .min(1900)
-    .max(2100)
-    .default(new Date().getFullYear()),
+  isMath: z.boolean(),
+  reference: z.array(z.string()).optional(),
+  session: z.coerce.number().int().min(1900).max(2100),
   source: z.string().optional().or(z.literal("")),
 });
 

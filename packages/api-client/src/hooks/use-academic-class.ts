@@ -5,7 +5,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@workspace/ui/components/sonner";
 import { useTRPC } from "../client";
 import { useAcademicClassFilters } from "../filters/client";
 
@@ -28,9 +28,14 @@ export function useCreateAcademicClass() {
     onSuccess: async (data) => {
       if (data.success) {
         toast.success(data.message);
-        await queryClient.invalidateQueries({
-          queryKey: trpc.academicClass.list.queryKey(),
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.list.queryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.getStats.queryKey(),
+          }),
+        ]);
       } else {
         toast.error(data.message);
       }
@@ -50,12 +55,20 @@ export function useUpdateAcademicClass() {
     onError: (error) => {
       toast.error(error.message || "Failed to update academic class");
     },
-    onSuccess: async (data) => {
+    onSuccess: async (data, variables) => {
       if (data.success) {
         toast.success(data.message);
-        await queryClient.invalidateQueries({
-          queryKey: trpc.academicClass.list.queryKey(),
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.list.queryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.getById.queryKey({ id: variables.id }),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.getStats.queryKey(),
+          }),
+        ]);
       } else {
         toast.error(data.message);
       }
@@ -75,12 +88,20 @@ export function useDeleteAcademicClass() {
     onError: (error) => {
       toast.error(error.message || "Failed to delete academic class");
     },
-    onSuccess: async (data) => {
+    onSuccess: async (data, variables) => {
       if (data.success) {
         toast.success(data.message);
-        await queryClient.invalidateQueries({
-          queryKey: trpc.academicClass.list.queryKey(),
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.list.queryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.getById.queryKey({ id: variables.id }),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.getStats.queryKey(),
+          }),
+        ]);
       } else {
         toast.error(data.message);
       }
@@ -103,9 +124,14 @@ export function useReorderAcademicClasses() {
     onSuccess: async (data) => {
       if (data.success) {
         toast.success(data.message);
-        await queryClient.invalidateQueries({
-          queryKey: trpc.academicClass.list.queryKey(),
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.list.queryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.getStats.queryKey(),
+          }),
+        ]);
       } else {
         toast.error(data.message);
       }
@@ -128,9 +154,14 @@ export function useBulkActiveAcademicClasses() {
     onSuccess: async (data) => {
       if (data.success) {
         toast.success(data.message);
-        await queryClient.invalidateQueries({
-          queryKey: trpc.academicClass.list.queryKey(),
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.list.queryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.getStats.queryKey(),
+          }),
+        ]);
       } else {
         toast.error(data.message);
       }
@@ -153,9 +184,14 @@ export function useBulkDeactivateAcademicClasses() {
     onSuccess: async (data) => {
       if (data.success) {
         toast.success(data.message);
-        await queryClient.invalidateQueries({
-          queryKey: trpc.academicClass.list.queryKey(),
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.list.queryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.getStats.queryKey(),
+          }),
+        ]);
       } else {
         toast.error(data.message);
       }
@@ -175,12 +211,20 @@ export function useActiveAcademicClass() {
     onError: (error) => {
       toast.error(error.message || "Failed to activate academic class");
     },
-    onSuccess: async (data) => {
+    onSuccess: async (data, variables) => {
       if (data.success) {
         toast.success("Academic class activated successfully");
-        await queryClient.invalidateQueries({
-          queryKey: trpc.academicClass.list.queryKey(),
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.list.queryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.getById.queryKey({ id: variables.id }),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.getStats.queryKey(),
+          }),
+        ]);
       } else {
         toast.error(data.message);
       }
@@ -208,12 +252,20 @@ export function useDeactivateAcademicClass() {
     onError: (error) => {
       toast.error(error.message || "Failed to deactivate academic class");
     },
-    onSuccess: async (data) => {
+    onSuccess: async (data, variables) => {
       if (data.success) {
         toast.success("Academic class deactivated successfully");
-        await queryClient.invalidateQueries({
-          queryKey: trpc.academicClass.list.queryKey(),
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.list.queryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.getById.queryKey({ id: variables.id }),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.getStats.queryKey(),
+          }),
+        ]);
       } else {
         toast.error(data.message);
       }
@@ -244,9 +296,14 @@ export function useBulkDeleteAcademicClasses() {
     onSuccess: async (data) => {
       if (data.success) {
         toast.success(data.message);
-        await queryClient.invalidateQueries({
-          queryKey: trpc.academicClass.list.queryKey(),
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.list.queryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicClass.getStats.queryKey(),
+          }),
+        ]);
       } else {
         toast.error(data.message);
       }
@@ -278,7 +335,10 @@ export function useAcademicClasses() {
         : ("asc" as const),
   };
 
-  return useSuspenseQuery(trpc.academicClass.list.queryOptions(input));
+  return useSuspenseQuery({
+    ...trpc.academicClass.list.queryOptions(input),
+    select: (data) => data.data,
+  });
 }
 
 /**
@@ -297,5 +357,49 @@ export function useAcademicClassById(id: string) {
  */
 export function useAcademicClassStats() {
   const trpc = useTRPC();
-  return useSuspenseQuery(trpc.academicClass.getStats.queryOptions());
+  return useSuspenseQuery({
+    ...trpc.academicClass.getStats.queryOptions(),
+    select: (data) => data.data,
+  });
+}
+
+/**
+ * Hook for getting detailed academic class statistics
+ */
+export function useAcademicClassDetailedStats(id: string) {
+  const trpc = useTRPC();
+  return useSuspenseQuery({
+    ...trpc.academicClass.getDetailedStats.queryOptions({ id }),
+    select: (data) => data.data,
+  });
+}
+
+/**
+ * Hook for getting academic class statistics data for charts
+ */
+export function useAcademicClassStatistics(id: string) {
+  const trpc = useTRPC();
+  return useSuspenseQuery({
+    ...trpc.academicClass.getStatisticsData.queryOptions({ id }),
+    select: (data) => data.data,
+  });
+}
+
+/**
+ * Hook for getting recently updated topics for an academic class
+ */
+export function useAcademicClassRecentTopics(classId: string, limit = 4) {
+  const trpc = useTRPC();
+  return useSuspenseQuery({
+    ...trpc.academicClass.getRecentTopics.queryOptions({ classId, limit }),
+    select: (data) => data.data,
+  });
+}
+
+export function useAcademicClassesForSelection() {
+  const trpc = useTRPC();
+  return useSuspenseQuery({
+    ...trpc.academicClass.forSelection.queryOptions(),
+    select: (data) => data.data,
+  });
 }

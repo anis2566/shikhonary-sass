@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
 import {
   createTRPCClient,
@@ -13,6 +13,7 @@ import type { AppRouter } from "@workspace/api";
 import { createQueryClient } from "./query-client";
 
 let clientQueryClientSingleton: QueryClient | undefined = undefined;
+
 const getQueryClient = () => {
   if (typeof window === "undefined") {
     return createQueryClient();
@@ -21,35 +22,39 @@ const getQueryClient = () => {
   }
 };
 
-export const { useTRPC, TRPCProvider } = createTRPCContext<AppRouter>();
+const getBaseUrl = () => {
+  if (typeof window !== "undefined") return "";
+  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
+  return `http://localhost:${process.env.PORT ?? 3000}`;
+};
 
-export function TRPCReactProvider(props: {
-  children: React.ReactNode;
-  baseUrl: string;
-}) {
+const trpcContext = createTRPCContext<AppRouter>();
+
+export const useTRPC = trpcContext.useTRPC;
+export const TRPCProvider = trpcContext.TRPCProvider;
+
+export function TRPCReactProvider(props: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
 
-  const trpcClient = useMemo(
-    () =>
-      createTRPCClient<AppRouter>({
-        links: [
-          loggerLink({
-            enabled: (op) =>
-              process.env.NODE_ENV === "development" ||
-              (op.direction === "down" && op.result instanceof Error),
-          }),
-          httpBatchStreamLink({
-            transformer: SuperJSON,
-            url: props.baseUrl + "/api/trpc",
-            headers() {
-              const headers = new Headers();
-              headers.set("x-trpc-source", "nextjs-react");
-              return headers;
-            },
-          }),
-        ],
-      }),
-    [props.baseUrl],
+  const [trpcClient] = useState(() =>
+    createTRPCClient<AppRouter>({
+      links: [
+        loggerLink({
+          enabled: (op) =>
+            process.env.NODE_ENV === "development" ||
+            (op.direction === "down" && op.result instanceof Error),
+        }),
+        httpBatchStreamLink({
+          transformer: SuperJSON,
+          url: getBaseUrl() + "/api/trpc",
+          headers() {
+            const headers = new Headers();
+            headers.set("x-trpc-source", "nextjs-react");
+            return headers;
+          },
+        }),
+      ],
+    }),
   );
 
   return (

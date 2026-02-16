@@ -1,5 +1,10 @@
-import { type PrismaClient } from "@workspace/db";
-import { type AcademicClass, type AcademicSubject } from "@workspace/schema";
+import {
+  type AcademicClass,
+  type AcademicSubject,
+  type PrismaClient,
+  type AcademicTopic,
+} from "@workspace/db";
+import { type AcademicClassFormValues } from "@workspace/schema";
 import { handlePrismaError } from "../middleware/error-handler";
 import {
   buildPagination,
@@ -10,6 +15,61 @@ import {
   createPaginatedResponse,
   type PaginatedResponse,
 } from "../shared/pagination";
+
+export interface ClassWithRelations extends AcademicClass {
+  subjects?: (AcademicSubject & {
+    _count: {
+      chapters: number;
+      mcqs: number;
+      cqs: number;
+    };
+  })[];
+  _count?: {
+    subjects: number;
+  };
+}
+
+export interface ClassDetailedStats {
+  stats: {
+    overview: {
+      totalSubjects: number;
+      totalChapters: number;
+      totalTopics: number;
+      totalSubTopics: number;
+      totalMcqs: number;
+      totalCqs: number;
+    };
+  };
+}
+
+export interface ClassStatisticsData {
+  contentDistribution: {
+    id: string;
+    name: string;
+    chapters: number;
+    percentage: number;
+  }[];
+  questionBank: {
+    mcqs: number;
+    cqs: number;
+    total: number;
+  };
+  hierarchy: {
+    subjects: number;
+    chapters: number;
+    topics: number;
+    subTopics: number;
+    questions: number;
+  };
+}
+
+export interface RecentTopicResponse {
+  id: string;
+  name: string;
+  chapterName: string;
+  subjectName: string;
+  updatedAt: Date;
+}
 
 /**
  * Service for managing Academic Classes
@@ -25,10 +85,7 @@ export class AcademicClassService {
     sortOrder?: "asc" | "desc";
     isActive?: boolean;
     level?: string;
-  }): Promise<
-    | PaginatedResponse<AcademicClass & { _count: { subjects: number } }>
-    | undefined
-  > {
+  }): Promise<PaginatedResponse<ClassWithRelations> | undefined> {
     try {
       const where = buildWhere(input);
       if (input.level) where.level = input.level;
@@ -51,7 +108,7 @@ export class AcademicClassService {
       ]);
 
       return createPaginatedResponse(
-        items as any,
+        items as ClassWithRelations[],
         total,
         input.page,
         input.limit,
@@ -61,21 +118,9 @@ export class AcademicClassService {
     }
   }
 
-  async getById(id: string): Promise<
-    | (AcademicClass & {
-        subjects: (AcademicSubject & {
-          _count: {
-            chapters: number;
-            mcqs: number;
-            cqs: number;
-          };
-        })[];
-      })
-    | null
-    | undefined
-  > {
+  async getById(id: string): Promise<ClassWithRelations | null | undefined> {
     try {
-      return (await this.db.academicClass.findUnique({
+      return await this.db.academicClass.findUnique({
         where: { id },
         include: {
           subjects: {
@@ -91,32 +136,45 @@ export class AcademicClassService {
             },
           },
         },
-      })) as any;
+      });
     } catch (error) {
       handlePrismaError(error);
     }
   }
 
-  async create(data: any): Promise<AcademicClass | undefined> {
+  async create(
+    data: AcademicClassFormValues,
+  ): Promise<AcademicClass | undefined> {
     try {
       if (data.position === undefined) {
         const count = await this.db.academicClass.count();
         data.position = count;
       }
-      const item = await this.db.academicClass.create({ data });
-      return item as unknown as AcademicClass;
+      const item = await this.db.academicClass.create({
+        data: {
+          ...data,
+          level: data.level,
+        },
+      });
+      return item;
     } catch (error) {
       handlePrismaError(error);
     }
   }
 
-  async update(id: string, data: any): Promise<AcademicClass | undefined> {
+  async update(
+    id: string,
+    data: Partial<AcademicClassFormValues>,
+  ): Promise<AcademicClass | undefined> {
     try {
       const item = await this.db.academicClass.update({
         where: { id },
-        data,
+        data: {
+          ...data,
+          level: data.level,
+        },
       });
-      return item as unknown as AcademicClass;
+      return item;
     } catch (error) {
       handlePrismaError(error);
     }
@@ -127,7 +185,7 @@ export class AcademicClassService {
       const item = await this.db.academicClass.delete({
         where: { id },
       });
-      return item as unknown as AcademicClass;
+      return item;
     } catch (error) {
       handlePrismaError(error);
     }
@@ -135,7 +193,7 @@ export class AcademicClassService {
 
   async reorder(
     items: { id: string; position: number }[],
-  ): Promise<any | undefined> {
+  ): Promise<AcademicClass[] | undefined> {
     try {
       return await this.db.$transaction(
         items.map((item) =>
@@ -150,7 +208,7 @@ export class AcademicClassService {
     }
   }
 
-  async bulkActive(ids: string[]): Promise<any | undefined> {
+  async bulkActive(ids: string[]): Promise<{ count: number } | undefined> {
     try {
       return await this.db.academicClass.updateMany({
         where: { id: { in: ids } },
@@ -161,7 +219,7 @@ export class AcademicClassService {
     }
   }
 
-  async bulkDeactive(ids: string[]): Promise<any | undefined> {
+  async bulkDeactive(ids: string[]): Promise<{ count: number } | undefined> {
     try {
       return await this.db.academicClass.updateMany({
         where: { id: { in: ids } },
@@ -172,7 +230,7 @@ export class AcademicClassService {
     }
   }
 
-  async bulkDelete(ids: string[]): Promise<any | undefined> {
+  async bulkDelete(ids: string[]): Promise<{ count: number } | undefined> {
     try {
       return await this.db.academicClass.deleteMany({
         where: { id: { in: ids } },
@@ -197,6 +255,174 @@ export class AcademicClassService {
         this.db.academicSubject.count(),
       ]);
       return { total, active, inactive: total - active, totalSubject };
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
+  /**
+   * Get detailed statistics for a specific class
+   */
+  async getDetailedStats(id: string): Promise<ClassDetailedStats | undefined> {
+    try {
+      const [
+        subjectCount,
+        chapterCount,
+        topicCount,
+        subTopicCount,
+        mcqCount,
+        cqCount,
+      ] = await Promise.all([
+        this.db.academicSubject.count({ where: { classId: id } }),
+        this.db.academicChapter.count({ where: { subject: { classId: id } } }),
+        this.db.academicTopic.count({
+          where: { chapter: { subject: { classId: id } } },
+        }),
+        this.db.academicSubTopic.count({
+          where: { topic: { chapter: { subject: { classId: id } } } },
+        }),
+        this.db.mcq.count({ where: { subject: { classId: id } } }),
+        this.db.cq.count({ where: { classId: id } }),
+      ]);
+
+      return {
+        stats: {
+          overview: {
+            totalSubjects: subjectCount,
+            totalChapters: chapterCount,
+            totalTopics: topicCount,
+            totalSubTopics: subTopicCount,
+            totalMcqs: mcqCount,
+            totalCqs: cqCount,
+          },
+        },
+      };
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
+  /**
+   * Get statistics data for charts (e.g., chapters per subject)
+   */
+  async getStatisticsData(
+    id: string,
+  ): Promise<ClassStatisticsData | undefined> {
+    try {
+      const [
+        subjects,
+        chapterCount,
+        topicCount,
+        subTopicCount,
+        mcqCount,
+        cqCount,
+      ] = await Promise.all([
+        this.db.academicSubject.findMany({
+          where: { classId: id },
+          select: {
+            id: true,
+            displayName: true,
+            _count: {
+              select: {
+                chapters: true,
+              },
+            },
+          },
+          orderBy: { position: "asc" },
+        }),
+        this.db.academicChapter.count({ where: { subject: { classId: id } } }),
+        this.db.academicTopic.count({
+          where: { chapter: { subject: { classId: id } } },
+        }),
+        this.db.academicSubTopic.count({
+          where: { topic: { chapter: { subject: { classId: id } } } },
+        }),
+        this.db.mcq.count({ where: { subject: { classId: id } } }),
+        this.db.cq.count({ where: { classId: id } }),
+      ]);
+
+      const totalChapters = subjects.reduce(
+        (acc, curr) => acc + curr._count.chapters,
+        0,
+      );
+
+      return {
+        contentDistribution: subjects.map((s) => ({
+          id: s.id,
+          name: s.displayName,
+          chapters: s._count.chapters,
+          percentage:
+            totalChapters > 0 ? (s._count.chapters / totalChapters) * 100 : 0,
+        })),
+        questionBank: {
+          mcqs: mcqCount,
+          cqs: cqCount,
+          total: mcqCount + cqCount,
+        },
+        hierarchy: {
+          subjects: subjects.length,
+          chapters: chapterCount,
+          topics: topicCount,
+          subTopics: subTopicCount,
+          questions: mcqCount + cqCount,
+        },
+      };
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
+  /**
+   * Get recently updated topics for a class
+   */
+  async getRecentTopics(input: {
+    classId: string;
+    limit: number;
+  }): Promise<RecentTopicResponse[] | undefined> {
+    try {
+      const topics = await this.db.academicTopic.findMany({
+        where: {
+          chapter: {
+            subject: {
+              classId: input.classId,
+            },
+          },
+        },
+        orderBy: { updatedAt: "desc" },
+        take: input.limit,
+        include: {
+          chapter: {
+            include: {
+              subject: true,
+            },
+          },
+        },
+      });
+
+      return topics.map((t) => ({
+        id: t.id,
+        name: t.displayName,
+        chapterName: t.chapter.displayName,
+        subjectName: t.chapter.subject.displayName,
+        updatedAt: t.updatedAt,
+      }));
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
+  async forSelection(): Promise<
+    { id: string; displayName: string }[] | undefined
+  > {
+    try {
+      return await this.db.academicClass.findMany({
+        where: { isActive: true },
+        select: {
+          id: true,
+          displayName: true,
+        },
+        orderBy: { position: "asc" },
+      });
     } catch (error) {
       handlePrismaError(error);
     }

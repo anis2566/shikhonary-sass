@@ -5,7 +5,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@workspace/ui/components/sonner";
 import { useTRPC } from "../client";
 import { useStudentFilters } from "../filters/client";
 

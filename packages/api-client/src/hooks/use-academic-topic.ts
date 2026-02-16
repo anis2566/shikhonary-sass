@@ -5,7 +5,15 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@workspace/ui/components/sonner";
+import type {
+  TopicDetailedStats,
+  TopicStatisticsData,
+  TopicWithRelations,
+  RecentSubTopic,
+  PaginatedResponse,
+} from "@workspace/api";
+
 import { useTRPC } from "../client";
 import { useAcademicTopicFilters } from "../filters/client";
 
@@ -50,12 +58,19 @@ export function useUpdateAcademicTopic() {
     onError: (error) => {
       toast.error(error.message || "Failed to update academic topic");
     },
-    onSuccess: async (data) => {
+    onSuccess: async (data, variables) => {
       if (data.success) {
         toast.success(data.message);
-        await queryClient.invalidateQueries({
-          queryKey: trpc.academicTopic.list.queryKey(),
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicTopic.list.queryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicTopic.getById.queryKey({
+              id: variables.id,
+            }),
+          }),
+        ]);
       } else {
         toast.error(data.message);
       }
@@ -75,12 +90,19 @@ export function useDeleteAcademicTopic() {
     onError: (error) => {
       toast.error(error.message || "Failed to delete academic topic");
     },
-    onSuccess: async (data) => {
+    onSuccess: async (data, variables) => {
       if (data.success) {
         toast.success(data.message);
-        await queryClient.invalidateQueries({
-          queryKey: trpc.academicTopic.list.queryKey(),
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicTopic.list.queryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicTopic.getById.queryKey({
+              id: variables.id,
+            }),
+          }),
+        ]);
       } else {
         toast.error(data.message);
       }
@@ -188,6 +210,86 @@ export function useBulkDeleteAcademicTopics() {
   });
 }
 
+/**
+ * Mutation hook for activating a single academic topic
+ */
+export function useActiveAcademicTopic() {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    ...trpc.academicTopic.update.mutationOptions(),
+    onError: (error) => {
+      toast.error(error.message || "Failed to activate academic topic");
+    },
+    onSuccess: async (data, variables) => {
+      if (data.success) {
+        toast.success("Academic topic activated successfully");
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicTopic.list.queryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicTopic.getById.queryKey({
+              id: variables.id,
+            }),
+          }),
+        ]);
+      } else {
+        toast.error(data.message);
+      }
+    },
+  });
+
+  return {
+    ...mutation,
+    mutate: (vars: { id: string }) =>
+      mutation.mutate({ id: vars.id, data: { isActive: true } }),
+    mutateAsync: (vars: { id: string }) =>
+      mutation.mutateAsync({ id: vars.id, data: { isActive: true } }),
+  };
+}
+
+/**
+ * Mutation hook for deactivating a single academic topic
+ */
+export function useDeactivateAcademicTopic() {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    ...trpc.academicTopic.update.mutationOptions(),
+    onError: (error) => {
+      toast.error(error.message || "Failed to deactivate academic topic");
+    },
+    onSuccess: async (data, variables) => {
+      if (data.success) {
+        toast.success("Academic topic deactivated successfully");
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicTopic.list.queryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.academicTopic.getById.queryKey({
+              id: variables.id,
+            }),
+          }),
+        ]);
+      } else {
+        toast.error(data.message);
+      }
+    },
+  });
+
+  return {
+    ...mutation,
+    mutate: (vars: { id: string }) =>
+      mutation.mutate({ id: vars.id, data: { isActive: false } }),
+    mutateAsync: (vars: { id: string }) =>
+      mutation.mutateAsync({ id: vars.id, data: { isActive: false } }),
+  };
+}
+
 // ============================================================================
 // ACADEMIC TOPIC QUERIES
 // ============================================================================
@@ -195,17 +297,69 @@ export function useBulkDeleteAcademicTopics() {
 export function useAcademicTopics() {
   const trpc = useTRPC();
   const [filters, _] = useAcademicTopicFilters();
-  return useSuspenseQuery(trpc.academicTopic.list.queryOptions(filters));
+  return useSuspenseQuery({
+    ...trpc.academicTopic.list.queryOptions(filters),
+    select: (data) => data.data as PaginatedResponse<TopicWithRelations>,
+  });
 }
 
 export function useAcademicTopicById(id: string) {
   const trpc = useTRPC();
-  return useSuspenseQuery(trpc.academicTopic.getById.queryOptions({ id }));
+  return useSuspenseQuery({
+    ...trpc.academicTopic.getById.queryOptions({ id }),
+    select: (data) => data.data as TopicWithRelations,
+  });
 }
 
 export function useAcademicTopicStats(chapterId?: string) {
   const trpc = useTRPC();
-  return useSuspenseQuery(
-    trpc.academicTopic.getStats.queryOptions({ chapterId }),
-  );
+  return useSuspenseQuery({
+    ...trpc.academicTopic.getStats.queryOptions({ chapterId }),
+    select: (data) => data.data,
+  });
+}
+
+export function useAcademicTopicsForSelection(chapterId?: string) {
+  const trpc = useTRPC();
+  return useSuspenseQuery({
+    ...trpc.academicTopic.forSelection.queryOptions({ chapterId }),
+    select: (data) => data.data,
+  });
+}
+
+export function useAcademicTopicByChapterId(chapterId: string) {
+  return useAcademicTopicsForSelection(chapterId);
+}
+
+/**
+ * Hook for getting detailed academic topic statistics
+ */
+export function useAcademicTopicDetailedStats(id: string) {
+  const trpc = useTRPC();
+  return useSuspenseQuery({
+    ...trpc.academicTopic.getDetailedStats.queryOptions({ id }),
+    select: (data) => data.data as TopicDetailedStats,
+  });
+}
+
+/**
+ * Hook for getting recently updated subtopics for an academic topic
+ */
+export function useAcademicTopicRecentSubTopics(topicId: string, limit = 5) {
+  const trpc = useTRPC();
+  return useSuspenseQuery({
+    ...trpc.academicTopic.getRecentSubTopics.queryOptions({ topicId, limit }),
+    select: (data) => data.data as RecentSubTopic[],
+  });
+}
+
+/**
+ * Hook for getting academic topic statistics data for charts
+ */
+export function useAcademicTopicStatistics(id: string) {
+  const trpc = useTRPC();
+  return useSuspenseQuery({
+    ...trpc.academicTopic.getStatisticsData.queryOptions({ id }),
+    select: (data) => data.data as TopicStatisticsData,
+  });
 }

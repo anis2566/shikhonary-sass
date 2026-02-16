@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 import { ClassDetailsStatCard } from "./class-details-stat-card";
-import { useAcademicClassDetailedStats } from "@/trpc/api/use-academic-class";
+import { useAcademicClassDetailedStats } from "@workspace/api-client";
 
 interface ClassDetailsStatProps {
   classId: string;

@@ -5,7 +5,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@workspace/ui/components/sonner";
 import { useTRPC } from "../client";
 import { useMCQFilters } from "../filters/client";
 
@@ -123,7 +123,10 @@ export function useBulkDeleteMCQs() {
 export function useMCQs() {
   const trpc = useTRPC();
   const [filters, _] = useMCQFilters();
-  return useSuspenseQuery(trpc.mcq.list.queryOptions(filters));
+  return useSuspenseQuery({
+    ...trpc.mcq.list.queryOptions(filters),
+    select: (data: any) => data.data,
+  });
 }
 
 /**
@@ -131,7 +134,10 @@ export function useMCQs() {
  */
 export function useMCQById(id: string) {
   const trpc = useTRPC();
-  return useSuspenseQuery(trpc.mcq.getById.queryOptions({ id }));
+  return useSuspenseQuery({
+    ...trpc.mcq.getById.queryOptions({ id }),
+    select: (data: any) => data.data,
+  });
 }
 
 /**
@@ -139,5 +145,8 @@ export function useMCQById(id: string) {
  */
 export function useMCQStats(filters: any) {
   const trpc = useTRPC();
-  return useSuspenseQuery(trpc.mcq.getStats.queryOptions(filters));
+  return useSuspenseQuery({
+    ...trpc.mcq.getStats.queryOptions(filters),
+    select: (data: any) => data.data,
+  });
 }

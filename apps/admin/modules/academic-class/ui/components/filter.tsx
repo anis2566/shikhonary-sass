@@ -8,9 +8,9 @@ import {
   Layers,
   Plus,
   Search,
-  Upload,
   X,
 } from "lucide-react";
+
 import Link from "next/link";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
@@ -25,7 +25,6 @@ import {
   SelectValue,
 } from "@workspace/ui/components/select";
 import { Switch } from "@workspace/ui/components/switch";
-import { cn } from "@workspace/ui/lib/utils";
 import { useDebounce } from "@workspace/ui/hooks/use-debounce";
 
 import { useAcademicClassFilters } from "@workspace/api-client";
@@ -121,135 +120,164 @@ export const Filter = ({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row gap-3 justify-between">
-      <div className="flex flex-col sm:flex-row gap-3 flex-1">
-        <div className="relative w-full md:max-w-[280px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search classes..."
-            type="search"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-            }}
-            className="pl-9 max-full"
-            disabled={isLoading}
-          />
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          <Select
-            value={filters.isActive || ""}
-            onValueChange={(v) => {
-              handleFilterStatusChange(v as ACTIVE_STATUS);
-            }}
-            disabled={isLoading}
-          >
-            <SelectTrigger className="w-full sm:w-32">
-              <FilterIcon className="h-4 w-4" />
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              {enumToOptions(ACTIVE_STATUS).map((option) => (
-                <SelectItem key={option.value} value={option.value.toString()}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={filters.level || ""}
-            onValueChange={(v) => {
-              handleFilterLevelChange(v as ACADEMIC_LEVEL);
-            }}
-            disabled={isLoading}
-          >
-            <SelectTrigger className="w-full sm:w-32">
-              <Layers className="h-4 w-4" />
-              <SelectValue placeholder="Level" />
-            </SelectTrigger>
-            <SelectContent>
-              {enumToOptions(ACADEMIC_LEVEL).map((option) => (
-                <SelectItem key={option.value} value={option.value.toString()}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={filters.sort || ""}
-            onValueChange={(v) => {
-              handleSortChange(v as SORT_WITH_POSITION);
-            }}
-            disabled={isLoading}
-          >
-            <SelectTrigger className="w-full sm:w-32">
-              <ArrowUpDown className="h-4 w-4" />
-              <SelectValue placeholder="Sort" />
-            </SelectTrigger>
-            <SelectContent>
-              {enumToOptions(SORT_WITH_POSITION).map((option) => (
-                <SelectItem key={option.value} value={option.value.toString()}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {hasActiveFilters && (
-            <Button
-              variant="outline"
-              className="hidden sm:flex text-red-500 hover:text-red-500 hover:bg-red-500/10 rounded-full bg-red-500/5"
-              onClick={handleResetFilters}
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col lg:flex-row gap-4 justify-between">
+        <div className="flex flex-col sm:flex-row gap-3 flex-1">
+          {/* Search Input */}
+          <div className="relative w-full md:max-w-[320px] group">
+            <Input
+              placeholder="Search academic classes..."
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 pr-10 h-10 w-full bg-background/50 backdrop-blur-sm border-border/50 rounded-xl focus:bg-background focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all shadow-soft placeholder:text-muted-foreground/50 font-medium"
+              disabled={isLoading}
+            />
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-10">
+              <Search className="h-4 w-4 text-primary/70 group-focus-within:text-primary transition-colors" />
+            </div>
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded-md text-muted-foreground transition-all z-10"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Status Filter */}
+            <Select
+              value={filters.isActive || ""}
+              onValueChange={(v) =>
+                handleFilterStatusChange(v as ACTIVE_STATUS)
+              }
               disabled={isLoading}
             >
-              <X className="h-4 w-4" />
-              Clear
-            </Button>
-          )}
-        </div>
-      </div>
-      <div className="flex gap-2 items-center">
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg">
-          <GripVertical className="h-4 w-4 text-muted-foreground" />
-          <Label htmlFor="reorder-mode" className="text-sm cursor-pointer">
-            Reorder
-          </Label>
-          <Switch
-            id="reorder-mode"
-            checked={reorderMode}
-            onCheckedChange={(checked) => {
-              handleReorderModeChange(checked);
-            }}
-            disabled={isLoading}
-          />
-        </div>
-        <Button
-          variant="outline"
-          size="icon"
-          className="hidden sm:flex"
-          disabled={isLoading}
-        >
-          <Download className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="hidden sm:flex"
-          disabled={isLoading}
-        >
-          <Upload className="h-4 w-4" />
-        </Button>
-        <Button asChild disabled={isLoading}>
-          <Link
-            href="/classes/new"
-            className={cn(
-              "",
-              isLoading && "cursor-not-allowed opacity-50 pointer-events-none",
+              <SelectTrigger className="h-10 min-w-[110px] bg-background/50 backdrop-blur-sm border-border/50 rounded-xl hover:bg-muted/50 transition-all shadow-soft font-medium">
+                <FilterIcon className="h-3.5 w-3.5 mr-2 text-primary/70" />
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                {enumToOptions(ACTIVE_STATUS).map((option) => (
+                  <SelectItem
+                    key={option.value}
+                    value={option.value.toString()}
+                    className="rounded-lg"
+                  >
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Level Filter */}
+            <Select
+              value={filters.level || ""}
+              onValueChange={(v) =>
+                handleFilterLevelChange(v as ACADEMIC_LEVEL)
+              }
+              disabled={isLoading}
+            >
+              <SelectTrigger className="h-10 min-w-[110px] bg-background/50 backdrop-blur-sm border-border/50 rounded-xl hover:bg-muted/50 transition-all shadow-soft font-medium">
+                <Layers className="h-3.5 w-3.5 mr-2 text-primary/70" />
+                <SelectValue placeholder="Level" />
+              </SelectTrigger>
+              <SelectContent>
+                {enumToOptions(ACADEMIC_LEVEL).map((option) => (
+                  <SelectItem
+                    key={option.value}
+                    value={option.value.toString()}
+                    className="rounded-lg"
+                  >
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Sort Filter */}
+            <Select
+              value={filters.sort || ""}
+              onValueChange={(v) => handleSortChange(v as SORT_WITH_POSITION)}
+              disabled={isLoading}
+            >
+              <SelectTrigger className="h-10 min-w-[110px] bg-background/50 backdrop-blur-sm border-border/50 rounded-xl hover:bg-muted/50 transition-all shadow-soft font-medium">
+                <ArrowUpDown className="h-3.5 w-3.5 mr-2 text-primary/70" />
+                <SelectValue placeholder="Sort" />
+              </SelectTrigger>
+              <SelectContent align="end">
+                {enumToOptions(SORT_WITH_POSITION).map((option) => (
+                  <SelectItem
+                    key={option.value}
+                    value={option.value.toString()}
+                    className="rounded-lg"
+                  >
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Reset Filters */}
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetFilters}
+                disabled={isLoading}
+                className="h-10 px-3 text-destructive hover:bg-destructive/10 hover:text-destructive rounded-xl transition-all font-semibold border border-transparent hover:border-destructive/20"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Reset
+              </Button>
             )}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Class
-          </Link>
-        </Button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {/* Reorder Mode Toggle */}
+          <div className="flex items-center gap-3 px-4 h-10 bg-background/50 backdrop-blur-sm border border-border/50 rounded-xl shadow-soft">
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+            <Label
+              htmlFor="reorder-mode"
+              className="text-sm font-bold uppercase tracking-wider text-muted-foreground/80 cursor-pointer"
+            >
+              Reorder
+            </Label>
+            <Switch
+              id="reorder-mode"
+              checked={reorderMode}
+              onCheckedChange={handleReorderModeChange}
+              disabled={isLoading}
+              className="data-[state=checked]:bg-primary"
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-10 w-10 border-border/50 bg-background/50 backdrop-blur-sm rounded-xl hover:bg-muted transition-all shadow-soft"
+              disabled={isLoading}
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+
+            <Button
+              asChild
+              disabled={isLoading}
+              className="h-10 px-4 bg-primary text-primary-foreground rounded-xl shadow-glow hover:scale-[1.02] active:scale-[0.98] transition-all font-bold"
+            >
+              <Link href="/classes/new">
+                <Plus className="h-4 w-4 mr-2 stroke-[3]" />
+                Add Class
+              </Link>
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

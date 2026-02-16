@@ -2,7 +2,7 @@ import { Metadata } from "next";
 
 import { HydrateClient } from "@/trpc/server";
 
-import { NewClassView } from "@/modules/class/ui/views/new-class-view";
+import { NewClassView } from "@/modules/academic-class/ui/views/new-class-view";
 import DashboardHeader from "@/modules/layout/ui/layout/dashboard-header";
 
 export const metadata: Metadata = {

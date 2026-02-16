@@ -15,7 +15,7 @@ import {
   postalCodeSchema,
   uuidSchema,
   metadataSchema,
-} from "./shared/fields.js";
+} from "./shared/fields";
 
 /**
  * Tenant Schema

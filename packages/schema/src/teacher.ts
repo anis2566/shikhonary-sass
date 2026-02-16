@@ -8,7 +8,7 @@ import {
   citySchema,
   stateSchema,
   postalCodeSchema,
-} from "./shared/fields.js";
+} from "./shared/fields";
 
 /**
  * Teacher Schema

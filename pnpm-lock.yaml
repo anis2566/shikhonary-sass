@@ -176,16 +176,16 @@ importers:
   packages/api-client:
     dependencies:
       '@tanstack/react-query':
-        specifier: ^5.66.0
+        specifier: ^5.90.21
         version: 5.90.21(react@19.2.4)
       '@trpc/client':
-        specifier: ^11.6.0
+        specifier: ^11.10.0
         version: 11.10.0(@trpc/server@11.10.0(typescript@5.9.3))(typescript@5.9.3)
       '@trpc/react-query':
-        specifier: ^11.6.0
+        specifier: ^11.10.0
         version: 11.10.0(@tanstack/react-query@5.90.21(react@19.2.4))(@trpc/client@11.10.0(@trpc/server@11.10.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.10.0(typescript@5.9.3))(react@19.2.4)(typescript@5.9.3)
       '@trpc/server':
-        specifier: ^11.6.0
+        specifier: ^11.0.0-rc.666
         version: 11.10.0(typescript@5.9.3)
       '@trpc/tanstack-react-query':
         specifier: ^11.10.0
@@ -193,24 +193,33 @@ importers:
       '@workspace/api':
         specifier: workspace:*
         version: link:../api
+      '@workspace/ui':
+        specifier: workspace:*
+        version: link:../ui
       '@workspace/utils':
         specifier: workspace:*
         version: link:../utils
+      next:
+        specifier: 16.1.6
+        version: 16.1.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       nuqs:
         specifier: ^2.8.8
         version: 2.8.8(next@16.1.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
       react:
-        specifier: ^19.0.0
+        specifier: ^19.2.4
         version: 19.2.4
+      react-error-boundary:
+        specifier: ^6.1.1
+        version: 6.1.1(react@19.2.4)
       sonner:
-        specifier: ^1.4.41
-        version: 1.7.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: ^2.0.7
+        version: 2.0.7(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       superjson:
         specifier: ^2.2.2
         version: 2.2.6
     devDependencies:
       '@types/react':
-        specifier: ^19.0.0
+        specifier: ^19.2.14
         version: 19.2.14
       '@workspace/eslint-config':
         specifier: workspace:*
@@ -4896,12 +4905,6 @@ packages:
     resolution: {integrity: sha512-2Dd78bqzzjE6KPkD5fHZmDAKRNe3J15q+YHDrIsy9WEkqttc7GY+kT9OBLSMaPbQaEd0x1BjcmtMtXkfpc+T5A==}
     engines: {node: '>=10.2.0'}
 
-  sonner@1.7.4:
-    resolution: {integrity: sha512-DIS8z4PfJRbIyfVFDVnK9rO3eYDtse4Omcm6bt0oEr5/jtLgysmjuBl1frJ9E/EQZrFmKx2A8m/s5s9CRXIzhw==}
-    peerDependencies:
-      react: ^18.0.0 || ^19.0.0 || ^19.0.0-rc
-      react-dom: ^18.0.0 || ^19.0.0 || ^19.0.0-rc
-
   sonner@2.0.7:
     resolution: {integrity: sha512-W6ZN4p58k8aDKA4XPcx2hpIQXBRAgyiWVkYhT7CvK6D3iAu7xjvVyhQHg2/iaKJZ1XVJ4r7XuwGL+WGEK37i9w==}
     peerDependencies:
@@ -7447,7 +7450,7 @@ snapshots:
       '@typescript-eslint/visitor-keys': 8.55.0
       debug: 4.4.3
       minimatch: 9.0.5
-      semver: 7.7.3
+      semver: 7.7.4
       tinyglobby: 0.2.15
       ts-api-utils: 2.4.0(typescript@5.9.3)
       typescript: 5.9.3
@@ -9716,11 +9719,6 @@ snapshots:
       - bufferutil
       - supports-color
       - utf-8-validate
-
-  sonner@1.7.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
-    dependencies:
-      react: 19.2.4
-      react-dom: 19.2.4(react@19.2.4)
 
   sonner@2.0.7(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:

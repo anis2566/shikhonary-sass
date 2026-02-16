@@ -1,4 +1,11 @@
-import { type PrismaClient } from "@workspace/db";
+import {
+  type PrismaClient,
+  type AcademicSubject,
+  type AcademicClass,
+  type AcademicChapter,
+  type AcademicTopic,
+} from "@workspace/db";
+import { type AcademicSubjectFormValues } from "@workspace/schema";
 import { handlePrismaError } from "../middleware/error-handler";
 import {
   buildPagination,
@@ -10,8 +17,79 @@ import {
   type PaginatedResponse,
 } from "../shared/pagination";
 
+export interface SubjectWithRelations extends AcademicSubject {
+  class?: AcademicClass | null;
+  chapters?: (AcademicChapter & {
+    _count?: {
+      topics: number;
+      mcqs: number;
+      cqs: number;
+    };
+  })[];
+  _count?: {
+    chapters: number;
+    mcqs: number;
+    cqs?: number;
+  };
+}
+
+export interface SubjectDetailedStats {
+  stats: {
+    overview: {
+      totalChapters: number;
+      activeChapters: number;
+      totalTopics: number;
+      totalSubTopics: number;
+      totalMcqs: number;
+      totalCqs: number;
+      totalQuestions: number;
+      completionRate: number;
+    };
+  };
+}
+
+export interface SubjectStatisticsData {
+  contentDistribution: {
+    id: string;
+    name: string;
+    topics: number;
+    percentage: number;
+  }[];
+  questionBank: {
+    mcqs: number;
+    cqs: number;
+    total: number;
+  };
+  hierarchy: {
+    chapters: number;
+    topics: number;
+    subTopics: number;
+    questions: number;
+  };
+}
+
+export interface RecentChapterResponse {
+  id: string;
+  displayName: string;
+  isActive: boolean;
+  _count: {
+    topics: number;
+    mcqs: number;
+    cqs: number;
+  };
+  updatedAt: Date;
+}
+
+export interface RecentTopicResponse {
+  id: string;
+  name: string;
+  chapterName: string;
+  subjectName: string;
+  updatedAt: Date;
+}
+
 export class AcademicSubjectService {
-  constructor(private db: PrismaClient) { }
+  constructor(private db: PrismaClient) {}
 
   async list(input: {
     page: number;
@@ -21,7 +99,7 @@ export class AcademicSubjectService {
     sortOrder?: "asc" | "desc";
     isActive?: boolean;
     classId?: string;
-  }): Promise<PaginatedResponse<any> | undefined> {
+  }): Promise<PaginatedResponse<SubjectWithRelations> | undefined> {
     try {
       const where = buildWhere(input);
       if (input.classId) where.classId = input.classId;
@@ -37,36 +115,52 @@ export class AcademicSubjectService {
           include: {
             class: true,
             _count: {
-              select: { chapters: true, mcqs: true },
+              select: { chapters: true, mcqs: true, cqs: true },
             },
           },
         }),
         this.db.academicSubject.count({ where }),
       ]);
 
-      return createPaginatedResponse(items, total, input.page, input.limit);
+      return createPaginatedResponse(
+        items as SubjectWithRelations[],
+        total,
+        input.page,
+        input.limit,
+      );
     } catch (error) {
       handlePrismaError(error);
     }
   }
 
-  async getById(id: string): Promise<any | null | undefined> {
+  async getById(id: string): Promise<SubjectWithRelations | null | undefined> {
     try {
-      return await this.db.academicSubject.findUnique({
+      return (await this.db.academicSubject.findUnique({
         where: { id },
         include: {
           class: true,
           chapters: {
             orderBy: { position: "asc" },
+            include: {
+              _count: {
+                select: {
+                  topics: true,
+                  mcqs: true,
+                  cqs: true,
+                },
+              },
+            },
           },
         },
-      });
+      })) as SubjectWithRelations | null;
     } catch (error) {
       handlePrismaError(error);
     }
   }
 
-  async create(data: any): Promise<any | undefined> {
+  async create(
+    data: AcademicSubjectFormValues,
+  ): Promise<AcademicSubject | undefined> {
     try {
       if (data.position === undefined) {
         const count = await this.db.academicSubject.count({
@@ -80,7 +174,10 @@ export class AcademicSubjectService {
     }
   }
 
-  async update(id: string, data: any): Promise<any | undefined> {
+  async update(
+    id: string,
+    data: Partial<AcademicSubjectFormValues>,
+  ): Promise<AcademicSubject | undefined> {
     try {
       return await this.db.academicSubject.update({
         where: { id },
@@ -91,7 +188,7 @@ export class AcademicSubjectService {
     }
   }
 
-  async delete(id: string): Promise<any | undefined> {
+  async delete(id: string): Promise<AcademicSubject | undefined> {
     try {
       return await this.db.academicSubject.delete({
         where: { id },
@@ -103,7 +200,7 @@ export class AcademicSubjectService {
 
   async reorder(
     items: { id: string; position: number }[],
-  ): Promise<any | undefined> {
+  ): Promise<AcademicSubject[] | undefined> {
     try {
       return await this.db.$transaction(
         items.map((item) =>
@@ -118,16 +215,255 @@ export class AcademicSubjectService {
     }
   }
 
-  async getStats(
-    classId?: string,
-  ): Promise<{ total: number; active: number; inactive: number } | undefined> {
+  async getStats(classId?: string): Promise<
+    | {
+        totalSubject: number;
+        activeSubject: number;
+        inactiveSubject: number;
+        totalChapters: number;
+      }
+    | undefined
+  > {
     try {
       const where = classId ? { classId } : {};
-      const [total, active] = await Promise.all([
+      const [total, active, totalChapters] = await Promise.all([
         this.db.academicSubject.count({ where }),
         this.db.academicSubject.count({ where: { ...where, isActive: true } }),
+        this.db.academicChapter.count({
+          where: { subject: where },
+        }),
       ]);
-      return { total, active, inactive: total - active };
+      return {
+        totalSubject: total,
+        activeSubject: active,
+        inactiveSubject: total - active,
+        totalChapters,
+      };
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
+  async bulkActive(ids: string[]): Promise<{ count: number } | undefined> {
+    try {
+      return await this.db.academicSubject.updateMany({
+        where: { id: { in: ids } },
+        data: { isActive: true },
+      });
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
+  async bulkDeactive(ids: string[]): Promise<{ count: number } | undefined> {
+    try {
+      return await this.db.academicSubject.updateMany({
+        where: { id: { in: ids } },
+        data: { isActive: false },
+      });
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
+  async bulkDelete(ids: string[]): Promise<{ count: number } | undefined> {
+    try {
+      return await this.db.academicSubject.deleteMany({
+        where: { id: { in: ids } },
+      });
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
+  async getDetailedStats(
+    id: string,
+  ): Promise<SubjectDetailedStats | undefined> {
+    try {
+      const [
+        chapterCount,
+        activeChapterCount,
+        topicCount,
+        subTopicCount,
+        mcqCount,
+        cqCount,
+      ] = await Promise.all([
+        this.db.academicChapter.count({ where: { subjectId: id } }),
+        this.db.academicChapter.count({
+          where: { subjectId: id, isActive: true },
+        }),
+        this.db.academicTopic.count({
+          where: { chapter: { subjectId: id } },
+        }),
+        this.db.academicSubTopic.count({
+          where: { topic: { chapter: { subjectId: id } } },
+        }),
+        this.db.mcq.count({ where: { subjectId: id } }),
+        this.db.cq.count({ where: { subjectId: id } }),
+      ]);
+
+      return {
+        stats: {
+          overview: {
+            totalChapters: chapterCount,
+            activeChapters: activeChapterCount,
+            totalTopics: topicCount,
+            totalSubTopics: subTopicCount,
+            totalMcqs: mcqCount,
+            totalCqs: cqCount,
+            totalQuestions: mcqCount + cqCount,
+            completionRate:
+              topicCount > 0
+                ? Math.min(Math.round((topicCount / 20) * 100), 100)
+                : 0, // Assuming 20 topics per subject target
+          },
+        },
+      };
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
+  async getStatisticsData(
+    id: string,
+  ): Promise<SubjectStatisticsData | undefined> {
+    try {
+      const [chapters, topicCount, subTopicCount, mcqCount, cqCount] =
+        await Promise.all([
+          this.db.academicChapter.findMany({
+            where: { subjectId: id },
+            select: {
+              id: true,
+              displayName: true,
+              _count: {
+                select: {
+                  topics: true,
+                },
+              },
+            },
+            orderBy: { position: "asc" },
+          }),
+          this.db.academicTopic.count({
+            where: { chapter: { subjectId: id } },
+          }),
+          this.db.academicSubTopic.count({
+            where: { topic: { chapter: { subjectId: id } } },
+          }),
+          this.db.mcq.count({ where: { subjectId: id } }),
+          this.db.cq.count({ where: { subjectId: id } }),
+        ]);
+
+      const totalTopics = chapters.reduce(
+        (acc, curr) => acc + curr._count.topics,
+        0,
+      );
+
+      return {
+        contentDistribution: chapters.map((c) => ({
+          id: c.id,
+          name: c.displayName,
+          topics: c._count.topics,
+          percentage:
+            totalTopics > 0 ? (c._count.topics / totalTopics) * 100 : 0,
+        })),
+        questionBank: {
+          mcqs: mcqCount,
+          cqs: cqCount,
+          total: mcqCount + cqCount,
+        },
+        hierarchy: {
+          chapters: chapters.length,
+          topics: topicCount,
+          subTopics: subTopicCount,
+          questions: mcqCount + cqCount,
+        },
+      };
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
+  async getRecentChapters(input: {
+    subjectId: string;
+    limit: number;
+  }): Promise<RecentChapterResponse[] | undefined> {
+    try {
+      const chapters = await this.db.academicChapter.findMany({
+        where: { subjectId: input.subjectId },
+        orderBy: { updatedAt: "desc" },
+        take: input.limit,
+        include: {
+          _count: {
+            select: {
+              topics: true,
+              mcqs: true,
+              cqs: true,
+            },
+          },
+        },
+      });
+
+      return chapters.map((c) => ({
+        id: c.id,
+        displayName: c.displayName,
+        isActive: c.isActive,
+        _count: c._count,
+        updatedAt: c.updatedAt,
+      }));
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
+  async getRecentTopics(input: {
+    subjectId: string;
+    limit: number;
+  }): Promise<RecentTopicResponse[] | undefined> {
+    try {
+      const topics = await this.db.academicTopic.findMany({
+        where: {
+          chapter: {
+            subjectId: input.subjectId,
+          },
+        },
+        orderBy: { updatedAt: "desc" },
+        take: input.limit,
+        include: {
+          chapter: {
+            include: {
+              subject: true,
+            },
+          },
+        },
+      });
+
+      return topics.map((t) => ({
+        id: t.id,
+        name: t.displayName,
+        chapterName: t.chapter.displayName,
+        subjectName: t.chapter.subject.displayName,
+        updatedAt: t.updatedAt,
+      }));
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
+  async forSelection(
+    classId?: string,
+  ): Promise<{ id: string; displayName: string }[] | undefined> {
+    try {
+      const where: { isActive: boolean; classId?: string } = { isActive: true };
+      if (classId) where.classId = classId;
+
+      return await this.db.academicSubject.findMany({
+        where,
+        select: {
+          id: true,
+          displayName: true,
+        },
+        orderBy: { position: "asc" },
+      });
     } catch (error) {
       handlePrismaError(error);
     }

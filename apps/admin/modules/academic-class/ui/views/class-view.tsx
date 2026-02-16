@@ -4,12 +4,7 @@ import { useState } from "react";
 import { ActivityIcon, BarChart3, BookText } from "lucide-react";
 
 import { Badge } from "@workspace/ui/components/badge";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@workspace/ui/components/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@workspace/ui/components/tabs";
 import { OverviewTab } from "../components/overview-tab";
 
 import { SubjectsTab } from "../components/subjects-tab";
@@ -29,7 +24,7 @@ export const ClassView = ({ classId }: ClassViewProps) => {
   if (!classData) return null;
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-6 animate-in fade-in duration-700">
       {/* Stats */}
       <ClassDetailsStat classId={classId} />
 
@@ -49,7 +44,7 @@ export const ClassView = ({ classId }: ClassViewProps) => {
             <BookText className="h-4 w-4" />
             <span className="hidden sm:inline">Subjects</span>
             <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-              {classData?.subjects.length}
+              {classData.subjects.length}
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="statistics" className="gap-2">
@@ -59,23 +54,17 @@ export const ClassView = ({ classId }: ClassViewProps) => {
         </TabsList>
 
         {/* Tabs Content */}
-        <TabsContent value="overview">
-          <OverviewTab
-            classId={classId}
-            cls={classData}
-            setActiveTab={setActiveTab}
-          />
-        </TabsContent>
-        <TabsContent value="subjects">
-          <SubjectsTab
-            subjects={classData?.subjects || []}
-            className={classData?.name || ""}
-            classId={classId}
-          />
-        </TabsContent>
-        <TabsContent value="statistics">
-          <StatisticsTab classId={classId} />
-        </TabsContent>
+        <OverviewTab
+          classId={classId}
+          cls={classData}
+          setActiveTab={setActiveTab}
+        />
+        <SubjectsTab
+          subjects={classData.subjects}
+          className={classData.name}
+          classId={classId}
+        />
+        <StatisticsTab classId={classId} />
       </Tabs>
     </div>
   );

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ATTENDANCE_STATUS } from "@workspace/utils/constants";
-import { uuidSchema } from "./shared/fields.js";
+import { uuidSchema } from "./shared/fields";
 
 /**
  * Attendance Schema

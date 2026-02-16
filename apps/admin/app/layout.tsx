@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { TRPCReactProvider } from "@/trpc/react";
+import { Toaster } from "@workspace/ui/components/sonner";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import "@workspace/ui/globals.css";
 import { Providers } from "@/components/providers";
-import { TRPCReactProvider } from "@/trpc/react";
-import { Toaster } from "sonner";
-import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { DeleteConfirmModal } from "@workspace/ui/shared/delete-confirm-modal";
 
 const fontSans = Geist({
   subsets: ["latin"],
@@ -36,7 +37,8 @@ export default function RootLayout({
           <NuqsAdapter>
             <Providers>
               {children}
-              <Toaster />
+              <Toaster position="top-right" />
+              <DeleteConfirmModal />
             </Providers>
           </NuqsAdapter>
         </TRPCReactProvider>

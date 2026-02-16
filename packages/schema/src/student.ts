@@ -9,7 +9,7 @@ import {
   citySchema,
   stateSchema,
   postalCodeSchema,
-} from "./shared/fields.js";
+} from "./shared/fields";
 
 /**
  * Student Schema

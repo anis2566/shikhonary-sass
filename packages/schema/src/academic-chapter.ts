@@ -1,20 +1,16 @@
 import { z } from "zod";
-import { nameSchema, uuidSchema } from "./shared/fields.js";
+import { nameSchema, uuidSchema } from "./shared/fields";
 
 /**
  * Academic Chapter Schema
  */
 
 export const academicChapterFormSchema = z.object({
-  subjectId: uuidSchema.or(z.string().min(1, "Please select a subject")),
+  subjectId: z.string().min(1, "Please select a subject"),
   name: nameSchema,
   displayName: nameSchema,
-  position: z.coerce
-    .number()
-    .int()
-    .min(0, "Position must be 0 or greater")
-    .default(0),
-  isActive: z.boolean().default(true),
+  position: z.coerce.number().int().min(0, "Position must be 0 or greater"),
+  isActive: z.boolean(),
 });
 
 export type AcademicChapterFormValues = z.infer<

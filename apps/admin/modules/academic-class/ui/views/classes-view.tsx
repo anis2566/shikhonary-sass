@@ -51,37 +51,35 @@ export const ClassesView = () => {
     useDeleteAcademicClass();
 
   const onReorder = (items: AcademicClass[]) => {
-    reorderAcademicClasses(items);
+    reorderAcademicClasses(
+      items.map((item, index) => ({ id: item.id, position: index })),
+    );
   };
 
   const onBulkActivate = async () => {
-    await bulkActiveAcademicClasses({ ids: selectedIds })
-      .then(() => setSelectedIds([]))
-      .catch((error) => console.error(error));
+    await bulkActiveAcademicClasses({ ids: selectedIds }).then(() =>
+      setSelectedIds([]),
+    );
   };
 
   const onBulkDeactivate = async () => {
-    await bulkDeactivateAcademicClasses({ ids: selectedIds })
-      .then(() => setSelectedIds([]))
-      .catch((error) => console.error(error));
+    await bulkDeactivateAcademicClasses({ ids: selectedIds }).then(() =>
+      setSelectedIds([]),
+    );
   };
 
   const onBulkDelete = async () => {
-    await bulkDeleteAcademicClasses({ ids: selectedIds })
-      .then(() => setSelectedIds([]))
-      .catch((error) => console.error(error));
+    await bulkDeleteAcademicClasses({ ids: selectedIds }).then(() =>
+      setSelectedIds([]),
+    );
   };
 
   const onActive = async (id: string) => {
-    await activeAcademicClass({ id })
-      .then(() => setSelectedIds([]))
-      .catch((error) => console.error(error));
+    await activeAcademicClass({ id }).then(() => setSelectedIds([]));
   };
 
   const onDeactivate = async (id: string) => {
-    await deactivateAcademicClass({ id })
-      .then(() => setSelectedIds([]))
-      .catch((error) => console.error(error));
+    await deactivateAcademicClass({ id }).then(() => setSelectedIds([]));
   };
 
   const isLoading =
@@ -130,11 +128,19 @@ export const ClassesView = () => {
 
         {/* Reorder Mode */}
         {reorderMode && (
-          <div className="flex items-center gap-2 p-3 bg-primary/5 border border-primary/20 rounded-lg">
-            <GripVertical className="h-4 w-4 text-primary" />
-            <span className="text-sm text-primary font-medium">
-              Drag and drop rows to reorder. Changes are saved automatically.
-            </span>
+          <div className="flex items-center gap-3 p-4 bg-primary/[0.03] backdrop-blur-md border border-primary/20 rounded-xl shadow-glow animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <GripVertical className="h-4 w-4 text-primary animate-pulse" />
+            </div>
+            <div className="space-y-0.5">
+              <span className="text-sm text-primary font-semibold block">
+                Reorder Mode Active
+              </span>
+              <span className="text-xs text-primary/70">
+                Drag rows to adjust position. Your changes are synchronized
+                automatically with the database.
+              </span>
+            </div>
           </div>
         )}
       </div>
@@ -142,7 +148,7 @@ export const ClassesView = () => {
       {/* Class List */}
       <ClassList
         onReorder={onReorder}
-        disableReorder={isReordering}
+        disableReorder={!reorderMode || isReordering}
         selectedIds={selectedIds}
         setSelectedIds={setSelectedIds}
         onActive={onActive}

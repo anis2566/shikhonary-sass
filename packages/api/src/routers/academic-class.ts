@@ -6,6 +6,10 @@ import {
 } from "../trpc/index";
 import { AcademicClassService } from "../services/academic-class.service";
 import { baseListInputSchema, zNullishString } from "../shared/filters";
+import {
+  academicClassFormSchema,
+  updateAcademicClassSchema,
+} from "@workspace/schema";
 
 export const academicClassRouter = createTRPCRouter({
   list: adminProcedure
@@ -16,7 +20,11 @@ export const academicClassRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const service = new AcademicClassService(ctx.db);
-      return await service.list(input);
+      const data = await service.list(input);
+      return {
+        success: true,
+        data,
+      };
     }),
 
   getById: adminProcedure
@@ -31,7 +39,7 @@ export const academicClassRouter = createTRPCRouter({
     }),
 
   create: baseMutationProcedure
-    .input(z.any()) // Use AcademicClassSchema from @workspace/schema
+    .input(academicClassFormSchema)
     .mutation(async ({ ctx, input }) => {
       const service = new AcademicClassService(ctx.db);
       const data = await service.create(input);
@@ -43,7 +51,7 @@ export const academicClassRouter = createTRPCRouter({
     }),
 
   update: baseMutationProcedure
-    .input(z.object({ id: z.string(), data: z.any() }))
+    .input(z.object({ id: z.string(), data: updateAcademicClassSchema }))
     .mutation(async ({ ctx, input }) => {
       const service = new AcademicClassService(ctx.db);
       const data = await service.update(input.id, input.data);
@@ -113,6 +121,52 @@ export const academicClassRouter = createTRPCRouter({
 
   getStats: adminProcedure.query(async ({ ctx }) => {
     const service = new AcademicClassService(ctx.db);
-    return await service.getStats();
+    const data = await service.getStats();
+    return {
+      success: true,
+      data,
+    };
+  }),
+
+  getDetailedStats: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const service = new AcademicClassService(ctx.db);
+      const data = await service.getDetailedStats(input.id);
+      return {
+        success: true,
+        data,
+      };
+    }),
+
+  getStatisticsData: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const service = new AcademicClassService(ctx.db);
+      const data = await service.getStatisticsData(input.id);
+      return {
+        success: true,
+        data,
+      };
+    }),
+
+  getRecentTopics: adminProcedure
+    .input(z.object({ classId: z.string(), limit: z.number().default(4) }))
+    .query(async ({ ctx, input }) => {
+      const service = new AcademicClassService(ctx.db);
+      const data = await service.getRecentTopics(input);
+      return {
+        success: true,
+        data,
+      };
+    }),
+
+  forSelection: adminProcedure.query(async ({ ctx }) => {
+    const service = new AcademicClassService(ctx.db);
+    const data = await service.forSelection();
+    return {
+      success: true,
+      data,
+    };
   }),
 });

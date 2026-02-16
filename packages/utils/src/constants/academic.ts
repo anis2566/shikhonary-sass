@@ -65,4 +65,5 @@ export const academicLevelOptions = [
 export const sortOptions = enumToOptions(SORT);
 export const sortWithPositionOptions = enumToOptions(SORT_WITH_POSITION);
 export const groupOptions = enumToOptions(ACADEMIC_GROUP);
+export const activeStatusOptions = enumToOptions(ACTIVE_STATUS);
 export const shiftOptions = enumToOptions(SHIFT);

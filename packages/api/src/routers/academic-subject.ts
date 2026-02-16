@@ -11,6 +11,10 @@ import {
   zNullishString,
   zNullishBoolean,
 } from "../shared/filters";
+import {
+  academicSubjectFormSchema,
+  updateAcademicSubjectSchema,
+} from "@workspace/schema";
 
 export const academicSubjectRouter = createTRPCRouter({
   list: adminProcedure
@@ -21,18 +25,26 @@ export const academicSubjectRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const service = new AcademicSubjectService(ctx.db);
-      return await service.list(input);
+      const data = await service.list(input);
+      return {
+        success: true,
+        data,
+      };
     }),
 
   getById: adminProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const service = new AcademicSubjectService(ctx.db);
-      return await service.getById(input.id);
+      const data = await service.getById(input.id);
+      return {
+        success: true,
+        data,
+      };
     }),
 
   create: baseMutationProcedure
-    .input(z.any())
+    .input(academicSubjectFormSchema)
     .mutation(async ({ ctx, input }) => {
       const service = new AcademicSubjectService(ctx.db);
       const data = await service.create(input);
@@ -44,7 +56,7 @@ export const academicSubjectRouter = createTRPCRouter({
     }),
 
   update: baseMutationProcedure
-    .input(z.object({ id: z.string(), data: z.any() }))
+    .input(z.object({ id: z.string(), data: updateAcademicSubjectSchema }))
     .mutation(async ({ ctx, input }) => {
       const service = new AcademicSubjectService(ctx.db);
       const data = await service.update(input.id, input.data);
@@ -83,6 +95,98 @@ export const academicSubjectRouter = createTRPCRouter({
     .input(z.object({ classId: zNullishString }))
     .query(async ({ ctx, input }) => {
       const service = new AcademicSubjectService(ctx.db);
-      return await service.getStats(input.classId);
+      const data = await service.getStats(input.classId);
+      return {
+        success: true,
+        data,
+      };
     }),
-} satisfies TRPCRouterRecord);
+
+  bulkActive: baseMutationProcedure
+    .input(z.object({ ids: z.array(z.string()) }))
+    .mutation(async ({ ctx, input }) => {
+      const service = new AcademicSubjectService(ctx.db);
+      await service.bulkActive(input.ids);
+      return {
+        success: true,
+        message: "Subjects activated successfully",
+      };
+    }),
+
+  bulkDeactive: baseMutationProcedure
+    .input(z.object({ ids: z.array(z.string()) }))
+    .mutation(async ({ ctx, input }) => {
+      const service = new AcademicSubjectService(ctx.db);
+      await service.bulkDeactive(input.ids);
+      return {
+        success: true,
+        message: "Subjects deactivated successfully",
+      };
+    }),
+
+  bulkDelete: baseMutationProcedure
+    .input(z.object({ ids: z.array(z.string()) }))
+    .mutation(async ({ ctx, input }) => {
+      const service = new AcademicSubjectService(ctx.db);
+      await service.bulkDelete(input.ids);
+      return {
+        success: true,
+        message: "Subjects deleted successfully",
+      };
+    }),
+
+  getDetailedStats: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const service = new AcademicSubjectService(ctx.db);
+      const data = await service.getDetailedStats(input.id);
+      return {
+        success: true,
+        data,
+      };
+    }),
+
+  getStatisticsData: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const service = new AcademicSubjectService(ctx.db);
+      const data = await service.getStatisticsData(input.id);
+      return {
+        success: true,
+        data,
+      };
+    }),
+
+  getRecentChapters: adminProcedure
+    .input(z.object({ subjectId: z.string(), limit: z.number().default(4) }))
+    .query(async ({ ctx, input }) => {
+      const service = new AcademicSubjectService(ctx.db);
+      const data = await service.getRecentChapters(input);
+      return {
+        success: true,
+        data,
+      };
+    }),
+
+  getRecentTopics: adminProcedure
+    .input(z.object({ subjectId: z.string(), limit: z.number().default(4) }))
+    .query(async ({ ctx, input }) => {
+      const service = new AcademicSubjectService(ctx.db);
+      const data = await service.getRecentTopics(input);
+      return {
+        success: true,
+        data,
+      };
+    }),
+
+  forSelection: adminProcedure
+    .input(z.object({ classId: zNullishString }).optional())
+    .query(async ({ ctx, input }) => {
+      const service = new AcademicSubjectService(ctx.db);
+      const data = await service.forSelection(input?.classId);
+      return {
+        success: true,
+        data,
+      };
+    }),
+});

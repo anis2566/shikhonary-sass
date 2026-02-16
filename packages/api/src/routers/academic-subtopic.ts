@@ -8,27 +8,43 @@ import {
 import { AcademicSubTopicService } from "../services/academic-subtopic.service";
 import { baseListInputSchema, zNullishString } from "../shared/filters";
 
+import {
+  academicSubTopicFormSchema,
+  updateAcademicSubTopicSchema,
+} from "@workspace/schema";
+
 export const academicSubTopicRouter = createTRPCRouter({
   list: adminProcedure
     .input(
       baseListInputSchema.extend({
+        classId: zNullishString,
+        subjectId: zNullishString,
+        chapterId: zNullishString,
         topicId: zNullishString,
       }),
     )
     .query(async ({ ctx, input }) => {
       const service = new AcademicSubTopicService(ctx.db);
-      return await service.list(input);
+      const data = await service.list(input);
+      return {
+        success: true,
+        data,
+      };
     }),
 
   getById: adminProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const service = new AcademicSubTopicService(ctx.db);
-      return await service.getById(input.id);
+      const data = await service.getById(input.id);
+      return {
+        success: true,
+        data,
+      };
     }),
 
   create: baseMutationProcedure
-    .input(z.any())
+    .input(academicSubTopicFormSchema)
     .mutation(async ({ ctx, input }) => {
       const service = new AcademicSubTopicService(ctx.db);
       const data = await service.create(input);
@@ -40,7 +56,7 @@ export const academicSubTopicRouter = createTRPCRouter({
     }),
 
   update: baseMutationProcedure
-    .input(z.object({ id: z.string(), data: z.any() }))
+    .input(z.object({ id: z.string(), data: updateAcademicSubTopicSchema }))
     .mutation(async ({ ctx, input }) => {
       const service = new AcademicSubTopicService(ctx.db);
       const data = await service.update(input.id, input.data);
@@ -96,6 +112,28 @@ export const academicSubTopicRouter = createTRPCRouter({
       };
     }),
 
+  active: baseMutationProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const service = new AcademicSubTopicService(ctx.db);
+      await service.bulkActive([input.id]);
+      return {
+        success: true,
+        message: "Academic subtopic activated successfully",
+      };
+    }),
+
+  deactivate: baseMutationProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const service = new AcademicSubTopicService(ctx.db);
+      await service.bulkDeactive([input.id]);
+      return {
+        success: true,
+        message: "Academic subtopic deactivated successfully",
+      };
+    }),
+
   reorder: baseMutationProcedure
     .input(z.array(z.object({ id: z.string(), position: z.number() })))
     .mutation(async ({ ctx, input }) => {
@@ -112,6 +150,54 @@ export const academicSubTopicRouter = createTRPCRouter({
     .input(z.object({ topicId: zNullishString }))
     .query(async ({ ctx, input }) => {
       const service = new AcademicSubTopicService(ctx.db);
-      return await service.getStats(input.topicId);
+      const data = await service.getStats(input.topicId);
+      return {
+        success: true,
+        data,
+      };
     }),
-} satisfies TRPCRouterRecord);
+
+  forSelection: adminProcedure
+    .input(z.object({ topicId: zNullishString }).optional())
+    .query(async ({ ctx, input }) => {
+      const service = new AcademicSubTopicService(ctx.db);
+      const data = await service.forSelection(input?.topicId);
+      return {
+        success: true,
+        data,
+      };
+    }),
+
+  getDetailedStats: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const service = new AcademicSubTopicService(ctx.db);
+      const data = await service.getDetailedStats(input.id);
+      return {
+        success: true,
+        data,
+      };
+    }),
+
+  getStatisticsData: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const service = new AcademicSubTopicService(ctx.db);
+      const data = await service.getStatisticsData(input.id);
+      return {
+        success: true,
+        data,
+      };
+    }),
+
+  getRecentQuestions: adminProcedure
+    .input(z.object({ subTopicId: z.string(), limit: z.number().default(5) }))
+    .query(async ({ ctx, input }) => {
+      const service = new AcademicSubTopicService(ctx.db);
+      const data = await service.getRecentQuestions(input);
+      return {
+        success: true,
+        data,
+      };
+    }),
+});

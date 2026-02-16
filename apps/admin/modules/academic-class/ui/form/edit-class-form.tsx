@@ -1,6 +1,12 @@
 "use client";
 
-import { GraduationCap, Loader2 } from "lucide-react";
+import {
+  ChevronLeft,
+  GraduationCap,
+  Loader2,
+  Save,
+  Sparkles,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -29,15 +35,18 @@ import {
 } from "@workspace/ui/components/select";
 import { Switch } from "@workspace/ui/components/switch";
 import { Button } from "@workspace/ui/components/button";
+import { Badge } from "@workspace/ui/components/badge";
 import {
   academicClassFormSchema,
   AcademicClassFormValues,
   defaultAcademicClassValues,
 } from "@workspace/schema";
-import { ACADEMIC_LEVEL } from "@workspace/utils/constant";
+import { ACADEMIC_LEVEL, academicLevelOptions } from "@workspace/utils";
 
-import { useUpdateAcademicClass } from "@/trpc/api/use-academic-class";
-import { useAcademicClassById } from "@/trpc/api/use-academic-class";
+import {
+  useUpdateAcademicClass,
+  useAcademicClassById,
+} from "@workspace/api-client";
 
 interface EditClassFormProps {
   classId: string;
@@ -55,10 +64,17 @@ export function EditClassForm({ classId }: EditClassFormProps) {
 
   useEffect(() => {
     if (academicClass) {
+      // Normalize level from DB to match enum (e.g., "Secondary" -> "SECONDARY")
+      const dbLevel = (academicClass.level as string) || "";
+      const normalizedLevel = dbLevel
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g, "_") as ACADEMIC_LEVEL;
+
       form.reset({
         name: academicClass?.name,
         displayName: academicClass?.displayName,
-        level: academicClass?.level as ACADEMIC_LEVEL,
+        level: normalizedLevel,
         position: academicClass?.position,
         isActive: academicClass?.isActive,
       });
@@ -66,124 +82,183 @@ export function EditClassForm({ classId }: EditClassFormProps) {
   }, [academicClass, form]);
 
   const onSubmit = async (data: AcademicClassFormValues) => {
-    await updateClass({ id: classId, data })
-      .then(() => {
-        form.reset();
-        router.push("/classes");
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+    try {
+      await updateClass({ id: classId, data });
+      router.push("/classes");
+    } catch (error: unknown) {
+      console.error(error);
+    }
   };
 
   return (
-    <div className="w-full p-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <GraduationCap className="h-5 w-5" />
-            Update Academic Class
-          </CardTitle>
-          <CardDescription>
-            Customize academic class information
+    <div className="max-w-4xl mx-auto p-4 lg:p-6 space-y-8 animate-in fade-in duration-500 text-foreground">
+      {/* Header */}
+      <div className="flex flex-col gap-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.back()}
+          className="w-fit -ml-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
+        >
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          Back
+        </Button>
+
+        <div className="flex items-center gap-4">
+          <div className="size-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-soft">
+            <GraduationCap className="size-6 stroke-[2.5]" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-black tracking-tight text-foreground">
+              Update Class
+            </h1>
+            <p className="text-muted-foreground font-medium">
+              Refine the details of your academic class
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <Card className="bg-card/30 backdrop-blur-xl border-border/50 rounded-[2rem] overflow-hidden shadow-medium relative">
+        <div className="absolute top-0 right-0 p-8 opacity-5">
+          <Sparkles className="size-24 text-primary" />
+        </div>
+
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xl font-bold">Class Information</CardTitle>
+          <CardDescription className="text-muted-foreground font-medium">
+            Fill in the details below to update the class.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., Class 10"
-                        {...field}
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
-              <FormField
-                control={form.control}
-                name="displayName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Display Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., Tenth Grade"
-                        {...field}
+        <CardContent className="pt-6">
+          <Form {...form} key={academicClass?.id}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Academic Level */}
+                <FormField
+                  control={form.control}
+                  name="level"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                        Academic Level
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value?.toString()}
                         disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-12 bg-background/50 border-border/50 rounded-xl px-4 focus:ring-primary/20 transition-all shadow-soft font-semibold w-full">
+                            <SelectValue placeholder="Select level" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="rounded-xl border-border/50 shadow-medium backdrop-blur-xl bg-background/95">
+                          {academicLevelOptions.map((option) => (
+                            <SelectItem
+                              key={option.value}
+                              value={option.value.toString()}
+                              className="rounded-lg font-medium"
+                            >
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="font-bold text-xs" />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="level"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Academic Level</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      disabled={isPending}
-                    >
+                {/* Name */}
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                        Internal Name
+                      </FormLabel>
                       <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select academic level" />
-                        </SelectTrigger>
+                        <Input
+                          placeholder="e.g., class-10"
+                          {...field}
+                          disabled={isPending}
+                          className="h-12 bg-background/50 border-border/50 rounded-xl px-4 focus:ring-primary/20 transition-all shadow-soft font-semibold"
+                        />
                       </FormControl>
-                      <SelectContent>
-                        {Object.values(ACADEMIC_LEVEL).map((level) => (
-                          <SelectItem key={level} value={level}>
-                            {level.charAt(0).toUpperCase() + level.slice(1)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage className="font-bold text-xs" />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="position"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Position</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="0"
-                        {...field}
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                {/* Display Name */}
+                <FormField
+                  control={form.control}
+                  name="displayName"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                        Display Name
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., Class Ten"
+                          {...field}
+                          disabled={isPending}
+                          className="h-12 bg-background/50 border-border/50 rounded-xl px-4 focus:ring-primary/20 transition-all shadow-soft font-semibold"
+                        />
+                      </FormControl>
+                      <FormMessage className="font-bold text-xs" />
+                    </FormItem>
+                  )}
+                />
 
+                {/* Position */}
+                <FormField
+                  control={form.control}
+                  name="position"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                        Position
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(e.target.valueAsNumber || 0)
+                          }
+                          disabled={isPending}
+                          className="h-12 bg-background/50 border-border/50 rounded-xl px-4 focus:ring-primary/20 transition-all shadow-soft font-semibold"
+                        />
+                      </FormControl>
+                      <FormMessage className="font-bold text-xs" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Status Toggle */}
               <FormField
                 control={form.control}
                 name="isActive"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Active Status</FormLabel>
-                      <CardDescription>
-                        Make this class available for students
+                  <FormItem className="flex flex-row items-center justify-between rounded-[1.5rem] border border-border/50 bg-primary/5 p-6 shadow-soft transition-all hover:bg-primary/[0.07]">
+                    <div className="space-y-1">
+                      <FormLabel className="text-lg font-bold text-foreground flex items-center gap-2">
+                        Active Status
+                        {field.value && (
+                          <Badge className="bg-primary text-primary-foreground font-black text-[10px] uppercase">
+                            Live
+                          </Badge>
+                        )}
+                      </FormLabel>
+                      <CardDescription className="text-muted-foreground font-medium">
+                        Enable this class to make it visible across the system.
                       </CardDescription>
                     </div>
                     <FormControl>
@@ -191,18 +266,35 @@ export function EditClassForm({ classId }: EditClassFormProps) {
                         checked={field.value}
                         onCheckedChange={field.onChange}
                         disabled={isPending}
+                        className="data-[state=checked]:bg-primary"
                       />
                     </FormControl>
                   </FormItem>
                 )}
               />
 
-              <div className="flex justify-end gap-4">
-                <Button type="submit" disabled={isPending}>
-                  {isPending && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {/* Form Actions */}
+              <div className="flex items-center justify-end gap-3 pt-6 border-t border-border/30">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isPending}
+                  onClick={() => router.back()}
+                  className="h-12 px-6 rounded-xl font-bold border-border/50 hover:bg-muted transition-all"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isPending}
+                  className="h-12 px-8 bg-primary text-primary-foreground rounded-xl shadow-glow font-bold hover:scale-[1.02] active:scale-[0.98] transition-all min-w-[160px]"
+                >
+                  {isPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin stroke-[3]" />
+                  ) : (
+                    <Save className="mr-2 h-4 w-4 stroke-[3]" />
                   )}
-                  Update Class
+                  Save Changes
                 </Button>
               </div>
             </form>

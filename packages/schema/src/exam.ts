@@ -4,7 +4,7 @@ import {
   EXAM_STATUS,
   SUBMISSION_TYPE,
 } from "@workspace/utils/constants";
-import { nameSchema, uuidSchema } from "./shared/fields.js";
+import { nameSchema, uuidSchema } from "./shared/fields";
 
 /**
  * Exam Schema

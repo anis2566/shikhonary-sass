@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ACADEMIC_LEVEL } from "@workspace/utils/constants";
-import { nameSchema } from "./shared/fields.js";
+import { nameSchema } from "./shared/fields";
 
 /**
  * Academic Class Schema
@@ -12,12 +12,8 @@ export const academicClassFormSchema = z.object({
   level: z.nativeEnum(ACADEMIC_LEVEL, {
     errorMap: () => ({ message: "Please select a valid academic level" }),
   }),
-  position: z.coerce
-    .number()
-    .int()
-    .min(0, "Position must be 0 or greater")
-    .default(0),
-  isActive: z.boolean().default(true),
+  position: z.coerce.number().int().min(0, "Position must be 0 or greater"),
+  isActive: z.boolean(),
 });
 
 export type AcademicClassFormValues = z.infer<typeof academicClassFormSchema>;

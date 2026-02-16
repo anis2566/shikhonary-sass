@@ -19,14 +19,22 @@ export const mcqRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const service = new McqService(ctx.db);
-      return await service.list(input);
+      const data = await service.list(input);
+      return {
+        success: true,
+        data,
+      };
     }),
 
   getById: adminProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const service = new McqService(ctx.db);
-      return await service.getById(input.id);
+      const data = await service.getById(input.id);
+      return {
+        success: true,
+        data,
+      };
     }),
 
   create: baseMutationProcedure
@@ -81,6 +89,10 @@ export const mcqRouter = createTRPCRouter({
     .input(z.object({ chapterId: zNullishString }))
     .query(async ({ ctx, input }) => {
       const service = new McqService(ctx.db);
-      return await service.getStats(input.chapterId);
+      const data = await service.getStats(input.chapterId);
+      return {
+        success: true,
+        data,
+      };
     }),
 } satisfies TRPCRouterRecord);

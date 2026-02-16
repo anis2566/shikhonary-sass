@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { MCQ_TYPE, MCQ_IS_MATH } from "@workspace/utils/constants";
-import { uuidSchema } from "./shared/fields.js";
+import { uuidSchema } from "./shared/fields";
 
 /**
  * MCQ (Multiple Choice Question) Schema
@@ -16,18 +16,17 @@ export const mcqFormSchema = z.object({
   options: z
     .array(z.string().min(1, "Option content is required"))
     .min(2, "At least 2 options are required"),
-  type: z.nativeEnum(MCQ_TYPE).default(MCQ_TYPE.SINGLE),
-  isMath: z.boolean().default(false),
-  reference: z.array(z.string()).optional().default([]),
+  type: z.nativeEnum(MCQ_TYPE),
+  isMath: z.boolean(),
+  reference: z.array(z.string()).optional(),
   explanation: z.string().optional().or(z.literal("")),
   context: z.string().optional().or(z.literal("")),
-  statements: z.array(z.string()).optional().default([]),
+  statements: z.array(z.string()).optional(),
   session: z.coerce
     .number()
     .int()
     .min(1900, "Invalid session")
-    .max(2100, "Invalid session")
-    .default(new Date().getFullYear()),
+    .max(2100, "Invalid session"),
   source: z.string().optional().or(z.literal("")),
 });
 

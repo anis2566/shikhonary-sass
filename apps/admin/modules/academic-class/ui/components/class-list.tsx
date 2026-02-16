@@ -21,9 +21,11 @@ import {
 import {
   Edit,
   Eye,
+  GraduationCap,
   GripVertical,
   ListOrdered,
   MoreHorizontal,
+  Plus,
   ToggleLeft,
   ToggleRight,
   Trash2,
@@ -60,9 +62,15 @@ const columns: Column<AcademicClass>[] = [
     key: "displayName",
     header: "Class",
     render: (cls) => (
-      <div>
-        <p className="font-medium text-foreground">{cls.displayName}</p>
-        <p className="text-xs text-muted-foreground">{cls.name}</p>
+      <div className="flex flex-col gap-0.5">
+        <p className="font-semibold text-foreground tracking-tight leading-none truncate max-w-[200px]">
+          {cls.displayName}
+        </p>
+        <div className="flex items-center gap-1.5">
+          <code className="text-[10px] text-muted-foreground/70 bg-muted px-1 rounded uppercase tracking-tighter">
+            {cls.name}
+          </code>
+        </div>
       </div>
     ),
   },
@@ -76,8 +84,12 @@ const columns: Column<AcademicClass>[] = [
     header: "Position",
     render: (cls) => (
       <div className="flex items-center gap-2">
-        <ListOrdered className="w-4 h-4" />
-        <p className="text-xs">{cls.position}</p>
+        <div className="size-6 rounded-md bg-muted/50 flex items-center justify-center border border-border/50 shadow-soft group-hover/row:bg-primary/5 group-hover/row:border-primary/10 transition-colors">
+          <span className="text-[10px] font-bold text-muted-foreground group-hover/row:text-primary">
+            {cls.position}
+          </span>
+        </div>
+        <ListOrdered className="w-3.5 h-3.5 text-muted-foreground/50" />
       </div>
     ),
     hideOnMobile: true,
@@ -105,29 +117,46 @@ function StatusBadge({ active }: { active: boolean }) {
     <Badge
       variant={active ? "default" : "secondary"}
       className={cn(
-        "text-xs",
+        "text-[11px] font-bold px-2 py-0.5 rounded-full transition-all",
         active
-          ? "bg-green-100 text-green-700 hover:bg-green-100"
-          : "bg-muted text-muted-foreground",
+          ? "bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+          : "bg-muted text-muted-foreground border-transparent",
       )}
     >
+      <span
+        className={cn(
+          "size-1.5 rounded-full mr-1.5 animate-pulse",
+          active ? "bg-primary" : "bg-muted-foreground",
+        )}
+      />
       {active ? "Active" : "Inactive"}
     </Badge>
   );
 }
 
 function LevelBadge({ level }: { level: ACADEMIC_LEVEL }) {
+  const getLevelStyles = () => {
+    switch (level) {
+      case ACADEMIC_LEVEL.PRIMARY:
+        return "bg-amber-500/10 text-amber-600 border-amber-500/20";
+      case ACADEMIC_LEVEL.SECONDARY:
+        return "bg-primary/10 text-primary border-primary/20";
+      case ACADEMIC_LEVEL.HIGHER_SECONDARY:
+        return "bg-blue-500/10 text-blue-600 border-blue-500/20";
+      default:
+        return "bg-muted text-muted-foreground border-transparent";
+    }
+  };
+
   return (
     <Badge
       variant="outline"
       className={cn(
-        "text-xs",
-        level === ACADEMIC_LEVEL.PRIMARY && "text-amber-700 hover",
-        level === ACADEMIC_LEVEL.SECONDARY && "text-green-700 hover",
-        level === ACADEMIC_LEVEL.HIGHER_SECONDARY && "text-blue-700 hover",
+        "text-[11px] font-bold px-2 py-0.5 rounded-lg",
+        getLevelStyles(),
       )}
     >
-      {level}
+      {level.replace(/_/g, " ")}
     </Badge>
   );
 }
@@ -207,8 +236,23 @@ export function ClassList({
 
   if (!classesData || classesData.items.length === 0) {
     return (
-      <div className="bg-card rounded-xl border border-border p-8 text-center">
-        <p className="text-muted-foreground">No classes found</p>
+      <div className="bg-card/50 backdrop-blur-md rounded-3xl border border-border/50 p-12 text-center shadow-medium animate-in fade-in zoom-in-95 duration-500">
+        <div className="mx-auto size-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+          <GraduationCap className="size-8 text-primary" />
+        </div>
+        <h3 className="text-xl font-bold text-foreground">
+          No classes discovered yet
+        </h3>
+        <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
+          Start by adding your first academic class to begin organizing your
+          curriculum.
+        </p>
+        <Button asChild className="mt-6 rounded-xl font-bold shadow-glow">
+          <Link href="/classes/new">
+            <Plus className="size-4 mr-2 stroke-[3]" />
+            Create First Class
+          </Link>
+        </Button>
       </div>
     );
   }
@@ -232,21 +276,22 @@ export function ClassList({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="bg-card rounded-xl border border-border overflow-hidden">
+      <div className="bg-card/30 backdrop-blur-xl rounded-3xl border border-border/50 overflow-hidden shadow-medium">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="w-10 px-2 py-3">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-muted/30 border-b border-border/50">
+                <th className="w-10 px-3 py-4">
                   <span className="sr-only">Reorder</span>
                 </th>
-                <th className="w-12 px-4 py-3">
+                <th className="w-12 px-4 py-4">
                   <Checkbox
                     checked={allSelected}
                     onCheckedChange={handleSelectAll}
                     aria-label="Select all"
                     className={cn(
-                      someSelected && "data-[state=checked]:bg-primary/50",
+                      "rounded-md border-border/50 data-[state=checked]:bg-primary transition-all",
+                      someSelected && "data-[state=checked]:bg-primary/60",
                     )}
                   />
                 </th>
@@ -254,19 +299,19 @@ export function ClassList({
                   <th
                     key={String(column.key)}
                     className={cn(
-                      "text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-4 py-3",
+                      "text-left text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] px-4 py-4",
                       column.hideOnMobile && "hidden md:table-cell",
                     )}
                   >
                     {column.header}
                   </th>
                 ))}
-                <th className="w-12 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">
+                <th className="w-12 text-right text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] px-4 py-4">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-border/40">
               <SortableContext
                 items={classesData?.items.map((item) => item.id) ?? []}
                 strategy={verticalListSortingStrategy}
@@ -278,78 +323,84 @@ export function ClassList({
                     isSelected={selectedIds.includes(item.id)}
                     disabled={disableReorder}
                   >
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4 text-sm">
                       <Checkbox
                         checked={selectedIds.includes(item.id)}
                         onCheckedChange={() => handleSelectItem(item.id)}
                         aria-label={`Select item ${item.id}`}
+                        className="rounded-md border-border/50 data-[state=checked]:bg-primary transition-all"
                       />
                     </td>
                     {columns.map((column) => (
                       <td
                         key={String(column.key)}
                         className={cn(
-                          "px-4 py-3 text-sm",
+                          "px-4 py-4 text-sm text-foreground",
                           column.hideOnMobile && "hidden md:table-cell",
                         )}
                       >
                         {column.render ? column.render(item) : ""}
                       </td>
                     ))}
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-4 text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8"
+                            className="h-8 w-8 rounded-lg hover:bg-muted/80 text-muted-foreground"
                             disabled={isLoading}
                           >
                             <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Open menu</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
                           align="end"
-                          className="w-48 bg-white border border-border shadow-lg z-50"
+                          className="w-48 backdrop-blur-xl bg-background/95 border-border shadow-medium z-50 rounded-xl p-1"
                         >
-                          <DropdownMenuItem className="cursor-pointer" asChild>
-                            <Link href={`/classes/${item.id}`}>
-                              <Eye className="h-4 w-4 mr-2" />
-                              <span>View</span>
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="cursor-pointer" asChild>
-                            <Link href={`/classes/edit/${item.id}`}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            className="cursor-pointer"
+                            className="cursor-pointer font-medium p-2 rounded-lg"
+                            asChild
+                          >
+                            <Link href={`/classes/${item.id}`}>
+                              <Eye className="h-4 w-4 mr-2 opacity-70" />
+                              View Details
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="cursor-pointer font-medium p-2 rounded-lg"
+                            asChild
+                          >
+                            <Link href={`/classes/edit/${item.id}`}>
+                              <Edit className="h-4 w-4 mr-2 opacity-70" />
+                              Edit Class
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator className="bg-border/50 mx-1" />
+                          <DropdownMenuItem
+                            className="cursor-pointer font-medium p-2 rounded-lg"
                             onClick={() =>
                               handleToggleActiveStatus(item.id, item.isActive)
                             }
                           >
                             {item.isActive ? (
                               <>
-                                <ToggleLeft className="h-4 w-4 mr-2" />
+                                <ToggleLeft className="h-4 w-4 mr-2 text-amber-500 opacity-70" />
                                 Deactivate
                               </>
                             ) : (
                               <>
-                                <ToggleRight className="h-4 w-4 mr-2" />
+                                <ToggleRight className="h-4 w-4 mr-2 text-green-500 opacity-70" />
                                 Activate
                               </>
                             )}
                           </DropdownMenuItem>
-                          <DropdownMenuSeparator />
+                          <DropdownMenuSeparator className="bg-border/50 mx-1" />
                           <DropdownMenuItem
-                            className="cursor-pointer text-destructive focus:text-destructive"
+                            className="cursor-pointer font-medium p-2 rounded-lg text-destructive focus:bg-destructive/5 focus:text-destructive"
                             onClick={() => handleDelete(item.id, item.name)}
                           >
-                            <Trash2 className="h-4 w-4 mr-2" />
+                            <Trash2 className="h-4 w-4 mr-2 opacity-70" />
                             Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -365,12 +416,26 @@ export function ClassList({
 
       <DragOverlay>
         {activeItem ? (
-          <div className="bg-card border border-primary/50 rounded-lg shadow-xl p-3 flex items-center gap-3">
-            <GripVertical className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">
-              {activeItem.displayName}
-            </span>
-            <p className="text-xs">{activeItem.position}</p>
+          <div className="bg-background/80 backdrop-blur-xl border border-primary/30 rounded-xl shadow-glow p-4 flex items-center justify-between min-w-[300px] animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <GripVertical className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  {activeItem.displayName}
+                </p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">
+                  Position {activeItem.position}
+                </p>
+              </div>
+            </div>
+            <Badge
+              variant="outline"
+              className="text-[10px] uppercase font-bold tracking-widest border-primary/20 bg-primary/10 text-primary"
+            >
+              Dragging
+            </Badge>
           </div>
         ) : null}
       </DragOverlay>

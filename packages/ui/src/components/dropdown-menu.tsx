@@ -33,7 +33,7 @@ function DropdownMenuTrigger({
 
 function DropdownMenuContent({
   className,
-  sideOffset = 4,
+  sideOffset = -6,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
   return (
@@ -42,16 +42,9 @@ function DropdownMenuContent({
         data-slot="dropdown-menu-content"
         sideOffset={sideOffset}
         className={cn(
-          "bg-white dark:bg-slate-900/95 text-popover-foreground backdrop-blur-xl",
-          "border border-border dark:border-primary/20 shadow-md dark:shadow-xl dark:shadow-primary/10",
-          "data-[state=open]:animate-in data-[state=closed]:animate-out",
-          "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-          "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-          "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2",
-          "data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-          "z-50 max-h-(--radix-dropdown-menu-content-available-height)",
-          "min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin)",
-          "overflow-x-hidden overflow-y-auto rounded-md p-1",
+          "relative z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-[10rem] overflow-hidden rounded-2xl border border-border/60 bg-background/90 backdrop-blur-xl shadow-medium p-1.5 focus:outline-none",
+          "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-[0.98] data-[side=bottom]:slide-in-from-top-0 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-0",
+          "origin-(--radix-dropdown-menu-content-transform-origin)",
           className,
         )}
         {...props}
@@ -83,17 +76,11 @@ function DropdownMenuItem({
       data-inset={inset}
       data-variant={variant}
       className={cn(
-        "focus:bg-accent dark:focus:bg-primary/10 focus:text-accent-foreground transition-colors",
-        "data-[variant=destructive]:text-destructive",
-        "data-[variant=destructive]:focus:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20",
-        "data-[variant=destructive]:focus:text-destructive",
-        "data-[variant=destructive]:*:[svg]:!text-destructive",
-        "[&_svg:not([class*='text-'])]:text-muted-foreground dark:[&_svg:not([class*='text-'])]:text-slate-400",
-        "relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm",
-        "outline-hidden select-none",
+        "relative flex cursor-default select-none items-center gap-2 rounded-xl px-3 py-2 text-[13px] font-medium transition-all duration-200 outline-none",
+        "focus:bg-primary/5 focus:text-primary active:scale-[0.98]",
+        "data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         "data-[inset]:pl-8",
-        "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}

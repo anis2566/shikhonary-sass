@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ANNOUNCEMENT_TARGET } from "@workspace/utils/constants";
-import { nameSchema, uuidSchema } from "./shared/fields.js";
+import { nameSchema, uuidSchema } from "./shared/fields";
 
 /**
  * Announcement Schema

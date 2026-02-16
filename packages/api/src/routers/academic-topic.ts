@@ -8,27 +8,42 @@ import {
 import { AcademicTopicService } from "../services/academic-topic.service";
 import { baseListInputSchema, zNullishString } from "../shared/filters";
 
+import {
+  academicTopicFormSchema,
+  updateAcademicTopicSchema,
+} from "@workspace/schema";
+
 export const academicTopicRouter = createTRPCRouter({
   list: adminProcedure
     .input(
       baseListInputSchema.extend({
+        classId: zNullishString,
+        subjectId: zNullishString,
         chapterId: zNullishString,
       }),
     )
     .query(async ({ ctx, input }) => {
       const service = new AcademicTopicService(ctx.db);
-      return await service.list(input);
+      const data = await service.list(input);
+      return {
+        success: true,
+        data,
+      };
     }),
 
   getById: adminProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const service = new AcademicTopicService(ctx.db);
-      return await service.getById(input.id);
+      const data = await service.getById(input.id);
+      return {
+        success: true,
+        data,
+      };
     }),
 
   create: baseMutationProcedure
-    .input(z.any())
+    .input(academicTopicFormSchema)
     .mutation(async ({ ctx, input }) => {
       const service = new AcademicTopicService(ctx.db);
       const data = await service.create(input);
@@ -40,7 +55,7 @@ export const academicTopicRouter = createTRPCRouter({
     }),
 
   update: baseMutationProcedure
-    .input(z.object({ id: z.string(), data: z.any() }))
+    .input(z.object({ id: z.string(), data: updateAcademicTopicSchema }))
     .mutation(async ({ ctx, input }) => {
       const service = new AcademicTopicService(ctx.db);
       const data = await service.update(input.id, input.data);
@@ -112,6 +127,59 @@ export const academicTopicRouter = createTRPCRouter({
     .input(z.object({ chapterId: zNullishString }))
     .query(async ({ ctx, input }) => {
       const service = new AcademicTopicService(ctx.db);
-      return await service.getStats(input.chapterId);
+      const data = await service.getStats(input.chapterId);
+      return {
+        success: true,
+        data,
+      };
     }),
-} satisfies TRPCRouterRecord);
+
+  forSelection: adminProcedure
+    .input(z.object({ chapterId: zNullishString }).optional())
+    .query(async ({ ctx, input }) => {
+      const service = new AcademicTopicService(ctx.db);
+      const data = await service.forSelection(input?.chapterId);
+      return {
+        success: true,
+        data,
+      };
+    }),
+
+  getDetailedStats: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const service = new AcademicTopicService(ctx.db);
+      const data = await service.getDetailedStats(input.id);
+      return {
+        success: true,
+        data,
+      };
+    }),
+
+  getRecentSubTopics: adminProcedure
+    .input(
+      z.object({
+        topicId: z.string(),
+        limit: z.number().min(1).max(10).default(5),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const service = new AcademicTopicService(ctx.db);
+      const data = await service.getRecentSubTopics(input);
+      return {
+        success: true,
+        data,
+      };
+    }),
+
+  getStatisticsData: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const service = new AcademicTopicService(ctx.db);
+      const data = await service.getStatisticsData(input.id);
+      return {
+        success: true,
+        data,
+      };
+    }),
+});

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { nameSchema, uuidSchema } from "./shared/fields.js";
+import { nameSchema, uuidSchema } from "./shared/fields";
 
 /**
  * Batch Schema

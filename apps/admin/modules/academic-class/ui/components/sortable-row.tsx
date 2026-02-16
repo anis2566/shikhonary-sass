@@ -38,9 +38,10 @@ export const SortableRow = ({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "hover:bg-muted/30 transition-colors",
-        isSelected && "bg-primary/5",
-        isDragging && "bg-muted/50 opacity-50 shadow-lg z-50",
+        "group/row border-b border-border/50 last:border-0 transition-all duration-200",
+        "hover:bg-muted/40",
+        isSelected && "bg-primary/[0.03] hover:bg-primary/[0.05]",
+        isDragging && "bg-muted/80 opacity-50 shadow-medium z-50",
       )}
       {...attributes}
     >
@@ -48,12 +49,14 @@ export const SortableRow = ({
         <button
           {...listeners}
           className={cn(
-            "p-1 rounded hover:bg-muted cursor-grab active:cursor-grabbing",
+            "p-1.5 rounded-lg border border-transparent transition-all",
+            "hover:bg-background hover:border-border hover:shadow-soft",
+            "cursor-grab active:cursor-grabbing",
             disabled && "opacity-30 cursor-not-allowed",
           )}
           disabled={disabled}
         >
-          <GripVertical className="h-4 w-4 text-muted-foreground" />
+          <GripVertical className="h-4 w-4 text-muted-foreground group-hover/row:text-primary transition-colors" />
         </button>
       </td>
       {children}

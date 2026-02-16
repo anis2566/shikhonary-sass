@@ -7,6 +7,10 @@ import {
 } from "../trpc/index";
 import { AcademicChapterService } from "../services/academic-chapter.service";
 import { baseListInputSchema, zNullishString } from "../shared/filters";
+import {
+  academicChapterFormSchema,
+  updateAcademicChapterSchema,
+} from "@workspace/schema";
 
 export const academicChapterRouter = createTRPCRouter({
   list: adminProcedure
@@ -17,18 +21,26 @@ export const academicChapterRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const service = new AcademicChapterService(ctx.db);
-      return await service.list(input);
+      const data = await service.list(input);
+      return {
+        success: true,
+        data,
+      };
     }),
 
   getById: adminProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const service = new AcademicChapterService(ctx.db);
-      return await service.getById(input.id);
+      const data = await service.getById(input.id);
+      return {
+        success: true,
+        data,
+      };
     }),
 
   create: baseMutationProcedure
-    .input(z.any())
+    .input(academicChapterFormSchema)
     .mutation(async ({ ctx, input }) => {
       const service = new AcademicChapterService(ctx.db);
       const data = await service.create(input);
@@ -40,7 +52,7 @@ export const academicChapterRouter = createTRPCRouter({
     }),
 
   update: baseMutationProcedure
-    .input(z.object({ id: z.string(), data: z.any() }))
+    .input(z.object({ id: z.string(), data: updateAcademicChapterSchema }))
     .mutation(async ({ ctx, input }) => {
       const service = new AcademicChapterService(ctx.db);
       const data = await service.update(input.id, input.data);
@@ -112,6 +124,43 @@ export const academicChapterRouter = createTRPCRouter({
     .input(z.object({ subjectId: zNullishString }))
     .query(async ({ ctx, input }) => {
       const service = new AcademicChapterService(ctx.db);
-      return await service.getStats(input.subjectId);
+      const data = await service.getStats(input.subjectId);
+      return {
+        success: true,
+        data,
+      };
     }),
-} satisfies TRPCRouterRecord);
+
+  getDetailedStats: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const service = new AcademicChapterService(ctx.db);
+      const data = await service.getDetailedStats(input.id);
+      return {
+        success: true,
+        data,
+      };
+    }),
+
+  getStatisticsData: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const service = new AcademicChapterService(ctx.db);
+      const data = await service.getStatisticsData(input.id);
+      return {
+        success: true,
+        data,
+      };
+    }),
+
+  getRecentTopics: adminProcedure
+    .input(z.object({ chapterId: z.string(), limit: z.number().default(4) }))
+    .query(async ({ ctx, input }) => {
+      const service = new AcademicChapterService(ctx.db);
+      const data = await service.getRecentTopics(input);
+      return {
+        success: true,
+        data,
+      };
+    }),
+});

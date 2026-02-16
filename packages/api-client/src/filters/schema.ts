@@ -66,6 +66,7 @@ export const academicSubjectFilterSchema = {
  */
 export const academicChapterFilterSchema = {
   ...baseFilterSchema,
+  classId: parseAsString.withOptions({ clearOnDefault: true }),
   subjectId: parseAsString.withOptions({ clearOnDefault: true }),
   isActive: parseAsStringEnum(ACTIVE_STATUS).withOptions({
     clearOnDefault: true,
@@ -80,6 +81,8 @@ export const academicChapterFilterSchema = {
  */
 export const academicTopicFilterSchema = {
   ...baseFilterSchema,
+  classId: parseAsString.withOptions({ clearOnDefault: true }),
+  subjectId: parseAsString.withOptions({ clearOnDefault: true }),
   chapterId: parseAsString.withOptions({ clearOnDefault: true }),
   isActive: parseAsStringEnum(ACTIVE_STATUS).withOptions({
     clearOnDefault: true,
@@ -94,6 +97,9 @@ export const academicTopicFilterSchema = {
  */
 export const academicSubTopicFilterSchema = {
   ...baseFilterSchema,
+  classId: parseAsString.withOptions({ clearOnDefault: true }),
+  subjectId: parseAsString.withOptions({ clearOnDefault: true }),
+  chapterId: parseAsString.withOptions({ clearOnDefault: true }),
   topicId: parseAsString.withOptions({ clearOnDefault: true }),
   isActive: parseAsStringEnum(ACTIVE_STATUS).withOptions({
     clearOnDefault: true,
