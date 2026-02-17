@@ -20,6 +20,13 @@ export enum TENANT_DATABASE_STATUS {
   INACTIVE = "INACTIVE",
 }
 
+export enum TENANT_INVITATION_STATUS {
+  PENDING = "PENDING",
+  ACCEPTED = "ACCEPTED",
+  REJECTED = "REJECTED",
+  EXPIRED = "EXPIRED",
+}
+
 export const tenantTypeOptions = [
   {
     value: TENANT_TYPE.SCHOOL,
@@ -50,4 +57,8 @@ export const tenantTypeOptions = [
 
 export const tenantDatabaseStatusOptions = enumToOptions(
   TENANT_DATABASE_STATUS,
+);
+
+export const tenantInvitationStatusOptions = enumToOptions(
+  TENANT_INVITATION_STATUS,
 );

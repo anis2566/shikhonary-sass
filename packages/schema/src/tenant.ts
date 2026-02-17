@@ -52,8 +52,8 @@ export const tenantFormSchema = z.object({
   currentAcademicYear: z.string().max(20).optional().or(z.literal("")),
 
   // Status
-  isActive: z.boolean().default(true),
-  isSuspended: z.boolean().default(false),
+  isActive: z.boolean(),
+  isSuspended: z.boolean(),
   suspendReason: z.string().optional().nullable(),
   metadata: metadataSchema,
 });

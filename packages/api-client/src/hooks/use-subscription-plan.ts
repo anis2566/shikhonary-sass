@@ -58,3 +58,14 @@ export function useSubscriptionUsage(tenantId: string) {
     trpc.subscriptionPlan.getUsage.queryOptions({ tenantId }),
   );
 }
+
+/**
+ * Hook for getting subscription plans for selection
+ */
+export function useSubscriptionPlansForSelection() {
+  const trpc = useTRPC();
+  return useSuspenseQuery({
+    ...trpc.subscriptionPlan.forSelection.queryOptions(),
+    select: (data) => data.data,
+  });
+}

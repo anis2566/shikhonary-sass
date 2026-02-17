@@ -6,7 +6,7 @@ import { handlePrismaError } from "../middleware/error-handler";
  * Service for managing subscriptions and plans
  */
 export class SubscriptionService {
-  constructor(private db: PrismaClient) { }
+  constructor(private db: PrismaClient) {}
 
   /**
    * List all available plans
@@ -110,6 +110,43 @@ export class SubscriptionService {
           limit: tenant.customStorageLimit ?? plan?.defaultStorageLimit ?? 0,
         },
       };
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
+  /**
+   * Get all active plans for selection
+   */
+
+  async forSelection(): Promise<
+    | {
+        id: string;
+        displayName: string;
+        monthlyPriceBDT: number;
+        yearlyPriceBDT: number;
+        defaultStudentLimit: number;
+        defaultTeacherLimit: number;
+        defaultExamLimit: number;
+        defaultStorageLimit: number;
+      }[]
+    | undefined
+  > {
+    try {
+      return await this.db.subscriptionPlan.findMany({
+        where: { isActive: true },
+        select: {
+          id: true,
+          displayName: true,
+          monthlyPriceBDT: true,
+          yearlyPriceBDT: true,
+          defaultStudentLimit: true,
+          defaultTeacherLimit: true,
+          defaultExamLimit: true,
+          defaultStorageLimit: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
     } catch (error) {
       handlePrismaError(error);
     }

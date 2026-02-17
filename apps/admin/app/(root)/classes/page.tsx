@@ -24,10 +24,8 @@ const Classes = async ({ searchParams }: Props) => {
 
   return (
     <HydrateClient>
-      <div className="min-h-screen">
-        <DashboardHeader title="Classes" subtitle="Manage academic classes" />
-        <ClassesView />
-      </div>
+      <DashboardHeader title="Classes" subtitle="Manage academic classes" />
+      <ClassesView />
     </HydrateClient>
   );
 };

@@ -29,6 +29,7 @@
     "@workspace/ui": "workspace:*",
     "@workspace/utils": "workspace:*",
     "better-auth": "^1.4.12",
+    "date-fns": "^4.1.0",
     "framer-motion": "^12.34.0",
     "lucide-react": "^0.563.0",
     "next": "16.1.6",

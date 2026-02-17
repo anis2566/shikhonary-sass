@@ -7,6 +7,7 @@ import {
 } from "../trpc/index";
 import { TenantService } from "../services/tenant.service";
 import { baseListInputSchema } from "../shared/filters";
+import { tenantFormSchema, updateTenantSchema } from "@workspace/schema";
 
 /**
  * Platform-wide Tenant Management Router (Admin Only)
@@ -27,7 +28,7 @@ export const tenantRouter = createTRPCRouter({
     }),
 
   create: baseMutationProcedure
-    .input(z.any()) // Replace with proper schema from @workspace/schema
+    .input(tenantFormSchema)
     .mutation(async ({ ctx, input }) => {
       const service = new TenantService(ctx.db);
       const data = await service.create(input);
@@ -39,7 +40,7 @@ export const tenantRouter = createTRPCRouter({
     }),
 
   update: baseMutationProcedure
-    .input(z.object({ id: z.string(), data: z.any() }))
+    .input(z.object({ id: z.string(), data: updateTenantSchema }))
     .mutation(async ({ ctx, input }) => {
       const service = new TenantService(ctx.db);
       const data = await service.update(input.id, input.data);
@@ -73,4 +74,46 @@ export const tenantRouter = createTRPCRouter({
         data,
       };
     }),
+
+  bulkActive: baseMutationProcedure
+    .input(z.object({ ids: z.array(z.string()) }))
+    .mutation(async ({ ctx, input }) => {
+      const service = new TenantService(ctx.db);
+      await service.bulkActive(input.ids);
+      return {
+        success: true,
+        message: "Tenants activated successfully",
+      };
+    }),
+
+  bulkDeactive: baseMutationProcedure
+    .input(z.object({ ids: z.array(z.string()) }))
+    .mutation(async ({ ctx, input }) => {
+      const service = new TenantService(ctx.db);
+      await service.bulkDeactive(input.ids);
+      return {
+        success: true,
+        message: "Tenants deactivated successfully",
+      };
+    }),
+
+  bulkDelete: baseMutationProcedure
+    .input(z.object({ ids: z.array(z.string()) }))
+    .mutation(async ({ ctx, input }) => {
+      const service = new TenantService(ctx.db);
+      await service.bulkDelete(input.ids);
+      return {
+        success: true,
+        message: "Tenants deleted successfully",
+      };
+    }),
+
+  getStats: adminProcedure.query(async ({ ctx }) => {
+    const service = new TenantService(ctx.db);
+    const data = await service.getStats();
+    return {
+      success: true,
+      data,
+    };
+  }),
 } satisfies TRPCRouterRecord);

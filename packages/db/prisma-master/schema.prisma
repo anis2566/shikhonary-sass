@@ -98,7 +98,7 @@ model Tenant {
 
     databaseName     String? @unique
     connectionString String?
-    databaseStatus   String
+    databaseStatus   String  @default("PENDING")
 
     studentCount  Int @default(0)
     teacherCount  Int @default(0)

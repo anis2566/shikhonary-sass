@@ -37,4 +37,13 @@ export const subscriptionPlanRouter = createTRPCRouter({
         data,
       };
     }),
+
+  forSelection: adminProcedure.query(async ({ ctx }) => {
+    const service = new SubscriptionService(ctx.db);
+    const data = await service.forSelection();
+    return {
+      success: true,
+      data,
+    };
+  }),
 } satisfies TRPCRouterRecord);

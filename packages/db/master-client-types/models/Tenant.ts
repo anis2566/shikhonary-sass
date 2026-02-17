@@ -675,7 +675,7 @@ export type TenantCreateInput = {
   customDomainVerified?: boolean
   databaseName?: string | null
   connectionString?: string | null
-  databaseStatus: string
+  databaseStatus?: string
   studentCount?: number
   teacherCount?: number
   examCount?: number
@@ -716,7 +716,7 @@ export type TenantUncheckedCreateInput = {
   customDomainVerified?: boolean
   databaseName?: string | null
   connectionString?: string | null
-  databaseStatus: string
+  databaseStatus?: string
   studentCount?: number
   teacherCount?: number
   examCount?: number
@@ -839,7 +839,7 @@ export type TenantCreateManyInput = {
   customDomainVerified?: boolean
   databaseName?: string | null
   connectionString?: string | null
-  databaseStatus: string
+  databaseStatus?: string
   studentCount?: number
   teacherCount?: number
   examCount?: number
@@ -1201,7 +1201,7 @@ export type TenantCreateWithoutOwnerInput = {
   customDomainVerified?: boolean
   databaseName?: string | null
   connectionString?: string | null
-  databaseStatus: string
+  databaseStatus?: string
   studentCount?: number
   teacherCount?: number
   examCount?: number
@@ -1241,7 +1241,7 @@ export type TenantUncheckedCreateWithoutOwnerInput = {
   customDomainVerified?: boolean
   databaseName?: string | null
   connectionString?: string | null
-  databaseStatus: string
+  databaseStatus?: string
   studentCount?: number
   teacherCount?: number
   examCount?: number
@@ -1348,7 +1348,7 @@ export type TenantCreateWithoutMembersInput = {
   customDomainVerified?: boolean
   databaseName?: string | null
   connectionString?: string | null
-  databaseStatus: string
+  databaseStatus?: string
   studentCount?: number
   teacherCount?: number
   examCount?: number
@@ -1388,7 +1388,7 @@ export type TenantUncheckedCreateWithoutMembersInput = {
   customDomainVerified?: boolean
   databaseName?: string | null
   connectionString?: string | null
-  databaseStatus: string
+  databaseStatus?: string
   studentCount?: number
   teacherCount?: number
   examCount?: number
@@ -1524,7 +1524,7 @@ export type TenantCreateWithoutInvitationsInput = {
   customDomainVerified?: boolean
   databaseName?: string | null
   connectionString?: string | null
-  databaseStatus: string
+  databaseStatus?: string
   studentCount?: number
   teacherCount?: number
   examCount?: number
@@ -1564,7 +1564,7 @@ export type TenantUncheckedCreateWithoutInvitationsInput = {
   customDomainVerified?: boolean
   databaseName?: string | null
   connectionString?: string | null
-  databaseStatus: string
+  databaseStatus?: string
   studentCount?: number
   teacherCount?: number
   examCount?: number
@@ -1700,7 +1700,7 @@ export type TenantCreateWithoutSubscriptionInput = {
   customDomainVerified?: boolean
   databaseName?: string | null
   connectionString?: string | null
-  databaseStatus: string
+  databaseStatus?: string
   studentCount?: number
   teacherCount?: number
   examCount?: number
@@ -1740,7 +1740,7 @@ export type TenantUncheckedCreateWithoutSubscriptionInput = {
   customDomainVerified?: boolean
   databaseName?: string | null
   connectionString?: string | null
-  databaseStatus: string
+  databaseStatus?: string
   studentCount?: number
   teacherCount?: number
   examCount?: number
@@ -1876,7 +1876,7 @@ export type TenantCreateManyOwnerInput = {
   customDomainVerified?: boolean
   databaseName?: string | null
   connectionString?: string | null
-  databaseStatus: string
+  databaseStatus?: string
   studentCount?: number
   teacherCount?: number
   examCount?: number
