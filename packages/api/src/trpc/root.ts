@@ -9,7 +9,6 @@ import { academicSubTopicRouter } from "../routers/academic-subtopic";
 import { mcqRouter } from "../routers/mcq";
 import { studentRouter } from "../routers/student";
 import { batchRouter } from "../routers/batch";
-import { subscriptionPlanRouter } from "../routers/subscription-plan";
 import { academicTreeRouter } from "../routers/academic-tree";
 
 // Explicitly import branded types to ensure they are available for inference in this module
@@ -21,7 +20,6 @@ import type { TRPCContext, PrismaClient, TenantPrismaClient } from "./context";
 export const appRouter = t.router({
   auth: authRouter,
   tenant: tenantRouter,
-  subscriptionPlan: subscriptionPlanRouter,
   academicClass: academicClassRouter,
   academicSubject: academicSubjectRouter,
   academicChapter: academicChapterRouter,

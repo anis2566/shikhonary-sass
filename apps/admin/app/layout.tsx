@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { TRPCReactProvider } from "@/trpc/react";
 import { Toaster } from "@workspace/ui/components/sonner";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import NextTopLoader from "nextjs-toploader";
 
 import "@workspace/ui/globals.css";
 import { Providers } from "@/components/providers";
@@ -37,6 +38,7 @@ export default function RootLayout({
           <NuqsAdapter>
             <Providers>
               {children}
+              <NextTopLoader showSpinner={false} />
               <Toaster position="top-right" />
               <DeleteConfirmModal />
             </Providers>

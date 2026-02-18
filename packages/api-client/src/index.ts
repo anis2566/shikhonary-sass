@@ -10,7 +10,6 @@ export * from "./hooks/use-academic-subtopic";
 export * from "./hooks/use-mcq";
 export * from "./hooks/use-student";
 export * from "./hooks/use-batch";
-export * from "./hooks/use-subscription-plan";
 export * from "./hooks/use-tenant";
 export * from "./hooks/use-academic-tree";
 

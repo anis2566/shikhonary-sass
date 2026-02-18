@@ -16,7 +16,6 @@ export {
 
 // Export services for direct use if needed (e.g., in server actions or background jobs)
 export * from "./services/tenant.service";
-export * from "./services/subscription.service";
 export * from "./services/academic-class.service";
 export * from "./services/academic-subject.service";
 export * from "./services/academic-chapter.service";
