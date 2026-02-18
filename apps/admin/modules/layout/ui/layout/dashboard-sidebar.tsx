@@ -108,8 +108,6 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
 }) => {
   const pathname = usePathname();
   const router = useRouter();
-  // Replace with your auth hook
-  // const { signOut, user } = useAuth();
   const user = { email: "user@example.com" }; // Placeholder
 
   const [tenantsOpen, setTenantsOpen] = useState(true);
@@ -117,17 +115,13 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
   const [questionBankOpen, setQuestionBankOpen] = useState(true);
 
   const handleLogout = async () => {
-    // await signOut();
     router.push("/auth");
   };
 
-  // Enhanced isActive logic that handles exact matches and nested routes
   const isActive = (url: string) => {
-    // Exact match for root admin path
     if (url === "/admin") {
       return pathname === "/admin";
     }
-    // For other routes, check if pathname starts with the url
     return pathname === url || pathname.startsWith(`${url}/`);
   };
 
@@ -208,8 +202,8 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-card/60 backdrop-blur-md border-r border-border/50">
-      {/* Logo */}
-      <div className="flex items-center justify-between p-6 mb-2">
+      {/* ── Sticky Sidebar Header (Logo + Collapse Button) ── */}
+      <div className="flex-shrink-0 flex items-center justify-between px-6 py-5 border-b border-border/40 bg-card/60 backdrop-blur-md">
         <Link href="/admin" className="flex items-center gap-3 group">
           <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0 shadow-glow transition-transform group-hover:scale-105">
             <GraduationCap className="w-6 h-6 text-primary-foreground" />
@@ -237,8 +231,8 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
         )}
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-4 space-y-6 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-border hover:scrollbar-thumb-muted-foreground/20">
+      {/* ── Scrollable Navigation ── */}
+      <nav className="flex-1 px-4 py-4 space-y-6 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-border hover:scrollbar-thumb-muted-foreground/20">
         <div>
           <div className="px-3 mb-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60">
             {!collapsed ? "Main Menu" : "•••"}
@@ -285,8 +279,8 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
         </div>
       </nav>
 
-      {/* Footer */}
-      <div className="p-4 mt-auto border-t border-border/50">
+      {/* ── Sticky Sidebar Footer (User + Logout) ── */}
+      <div className="flex-shrink-0 p-4 border-t border-border/50 bg-card/60 backdrop-blur-md">
         {!collapsed && user && (
           <div className="mb-4 px-3 py-3 rounded-xl bg-muted/30 border border-border/40">
             <div className="flex items-center gap-3">
@@ -353,7 +347,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   return (
     <aside
       className={cn(
-        "hidden lg:flex flex-col h-screen sticky top-0 transition-all duration-300 z-sidebar",
+        "hidden lg:flex flex-col h-screen sticky top-0 flex-shrink-0 transition-all duration-300 z-30",
         collapsed ? "w-16" : "w-64",
       )}
     >
@@ -363,7 +357,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           variant="ghost"
           size="icon"
           onClick={onToggle}
-          className="absolute top-4 -right-3 w-6 h-6 rounded-full bg-card border border-border shadow-sm"
+          className="absolute top-5 -right-3 w-6 h-6 rounded-full bg-card border border-border shadow-sm z-10"
         >
           <ChevronLeft className="w-3 h-3 rotate-180" />
         </Button>

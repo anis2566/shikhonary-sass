@@ -1,4 +1,11 @@
+import { z } from "zod";
 import { handlePrismaError } from "../middleware/error-handler";
+import {
+  batchFormSchema,
+  updateBatchSchema,
+  uuidSchema,
+  BatchFormValues,
+} from "@workspace/schema";
 import {
   buildPagination,
   buildOrderBy,
@@ -16,7 +23,7 @@ export class BatchService {
   /**
    * Note: This service expects a Tenant-specific Prisma Client
    */
-  constructor(private db: any) { }
+  constructor(private db: any) {}
 
   async list(input: {
     page: number;
@@ -41,9 +48,7 @@ export class BatchService {
           orderBy,
           ...pagination,
           include: {
-            _count: {
-              select: { students: true },
-            },
+            _count: { select: { students: true } },
           },
         }),
         this.db.batch.count({ where }),
@@ -57,13 +62,11 @@ export class BatchService {
 
   async getById(id: string): Promise<any | null | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
       return await this.db.batch.findUnique({
-        where: { id },
+        where: { id: validatedId },
         include: {
-          students: {
-            take: 10,
-            orderBy: { name: "asc" },
-          },
+          students: { take: 10, orderBy: { name: "asc" } },
         },
       });
     } catch (error) {
@@ -71,18 +74,21 @@ export class BatchService {
     }
   }
 
-  async create(data: any): Promise<any | undefined> {
+  async create(input: BatchFormValues): Promise<any | undefined> {
     try {
+      const data = batchFormSchema.parse(input);
       return await this.db.batch.create({ data });
     } catch (error) {
       handlePrismaError(error);
     }
   }
 
-  async update(id: string, data: any): Promise<any | undefined> {
+  async update(id: string, input: BatchFormValues): Promise<any | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
+      const data = updateBatchSchema.parse(input);
       return await this.db.batch.update({
-        where: { id },
+        where: { id: validatedId },
         data,
       });
     } catch (error) {
@@ -92,9 +98,8 @@ export class BatchService {
 
   async delete(id: string): Promise<any | undefined> {
     try {
-      return await this.db.batch.delete({
-        where: { id },
-      });
+      const validatedId = uuidSchema.parse(id);
+      return await this.db.batch.delete({ where: { id: validatedId } });
     } catch (error) {
       handlePrismaError(error);
     }
@@ -109,7 +114,6 @@ export class BatchService {
       const active = await this.db.batch.count({
         where: { ...where, isActive: true },
       });
-
       return { total, active, inactive: total - active };
     } catch (error) {
       handlePrismaError(error);

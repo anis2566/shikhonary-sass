@@ -26,6 +26,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@workspace/ui/components/tabs";
+import { steps } from "../components/step-indicator";
+import { useMultiStepForm } from "../hooks/use-multi-step-form";
 
 interface EditTenantFormProps {
   tenantId: string;
@@ -40,6 +42,9 @@ export function EditTenantForm({ tenantId }: EditTenantFormProps) {
     resolver: zodResolver(tenantFormSchema),
     defaultValues: defaultTenantValues,
   });
+
+  const { currentStep, handleNext, handlePrevious, handleStepClick } =
+    useMultiStepForm(form, steps.length);
 
   useEffect(() => {
     if (tenant) {
@@ -69,7 +74,12 @@ export function EditTenantForm({ tenantId }: EditTenantFormProps) {
   }, [tenant, form]);
 
   const onSubmit = (data: TenantFormValues) => {
-    updateTenant({ id: tenantId, data });
+    if (currentStep === steps.length + 1) {
+      updateTenant({ id: tenantId, data });
+      router.push("/tenants");
+    } else {
+      handleNext();
+    }
   };
 
   if (isLoadingTenant) {

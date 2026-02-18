@@ -1,10 +1,15 @@
+import { z } from "zod";
 import {
   type AcademicClass,
   type AcademicSubject,
   type PrismaClient,
   type AcademicTopic,
 } from "@workspace/db";
-import { type AcademicClassFormValues } from "@workspace/schema";
+import {
+  academicClassFormSchema,
+  updateAcademicClassSchema,
+  uuidSchema,
+} from "@workspace/schema";
 import { handlePrismaError } from "../middleware/error-handler";
 import {
   buildPagination,
@@ -63,13 +68,20 @@ export interface ClassStatisticsData {
   };
 }
 
-export interface RecentTopicResponse {
+export interface ClassRecentTopicResponse {
   id: string;
   name: string;
   chapterName: string;
   subjectName: string;
   updatedAt: Date;
 }
+
+const reorderItemsSchema = z.array(
+  z.object({
+    id: uuidSchema,
+    position: z.number().int().min(0),
+  }),
+);
 
 /**
  * Service for managing Academic Classes
@@ -120,8 +132,9 @@ export class AcademicClassService {
 
   async getById(id: string): Promise<ClassWithRelations | null | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
       return await this.db.academicClass.findUnique({
-        where: { id },
+        where: { id: validatedId },
         include: {
           subjects: {
             orderBy: { position: "asc" },
@@ -142,10 +155,10 @@ export class AcademicClassService {
     }
   }
 
-  async create(
-    data: AcademicClassFormValues,
-  ): Promise<AcademicClass | undefined> {
+  async create(input: AcademicClass): Promise<AcademicClass | undefined> {
     try {
+      const data = academicClassFormSchema.parse(input);
+
       if (data.position === undefined) {
         const count = await this.db.academicClass.count();
         data.position = count;
@@ -164,11 +177,14 @@ export class AcademicClassService {
 
   async update(
     id: string,
-    data: Partial<AcademicClassFormValues>,
+    input: AcademicClass,
   ): Promise<AcademicClass | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
+      const data = updateAcademicClassSchema.parse(input);
+
       const item = await this.db.academicClass.update({
-        where: { id },
+        where: { id: validatedId },
         data: {
           ...data,
           level: data.level,
@@ -182,8 +198,9 @@ export class AcademicClassService {
 
   async delete(id: string): Promise<AcademicClass | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
       const item = await this.db.academicClass.delete({
-        where: { id },
+        where: { id: validatedId },
       });
       return item;
     } catch (error) {
@@ -195,8 +212,9 @@ export class AcademicClassService {
     items: { id: string; position: number }[],
   ): Promise<AcademicClass[] | undefined> {
     try {
+      const validatedItems = reorderItemsSchema.parse(items);
       return await this.db.$transaction(
-        items.map((item) =>
+        validatedItems.map((item) =>
           this.db.academicClass.update({
             where: { id: item.id },
             data: { position: item.position },
@@ -210,8 +228,9 @@ export class AcademicClassService {
 
   async bulkActive(ids: string[]): Promise<{ count: number } | undefined> {
     try {
+      const validatedIds = z.array(uuidSchema).parse(ids);
       return await this.db.academicClass.updateMany({
-        where: { id: { in: ids } },
+        where: { id: { in: validatedIds } },
         data: { isActive: true },
       });
     } catch (error) {
@@ -221,8 +240,9 @@ export class AcademicClassService {
 
   async bulkDeactive(ids: string[]): Promise<{ count: number } | undefined> {
     try {
+      const validatedIds = z.array(uuidSchema).parse(ids);
       return await this.db.academicClass.updateMany({
-        where: { id: { in: ids } },
+        where: { id: { in: validatedIds } },
         data: { isActive: false },
       });
     } catch (error) {
@@ -232,8 +252,9 @@ export class AcademicClassService {
 
   async bulkDelete(ids: string[]): Promise<{ count: number } | undefined> {
     try {
+      const validatedIds = z.array(uuidSchema).parse(ids);
       return await this.db.academicClass.deleteMany({
-        where: { id: { in: ids } },
+        where: { id: { in: validatedIds } },
       });
     } catch (error) {
       handlePrismaError(error);
@@ -265,6 +286,7 @@ export class AcademicClassService {
    */
   async getDetailedStats(id: string): Promise<ClassDetailedStats | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
       const [
         subjectCount,
         chapterCount,
@@ -273,16 +295,18 @@ export class AcademicClassService {
         mcqCount,
         cqCount,
       ] = await Promise.all([
-        this.db.academicSubject.count({ where: { classId: id } }),
-        this.db.academicChapter.count({ where: { subject: { classId: id } } }),
+        this.db.academicSubject.count({ where: { classId: validatedId } }),
+        this.db.academicChapter.count({
+          where: { subject: { classId: validatedId } },
+        }),
         this.db.academicTopic.count({
-          where: { chapter: { subject: { classId: id } } },
+          where: { chapter: { subject: { classId: validatedId } } },
         }),
         this.db.academicSubTopic.count({
-          where: { topic: { chapter: { subject: { classId: id } } } },
+          where: { topic: { chapter: { subject: { classId: validatedId } } } },
         }),
-        this.db.mcq.count({ where: { subject: { classId: id } } }),
-        this.db.cq.count({ where: { classId: id } }),
+        this.db.mcq.count({ where: { subject: { classId: validatedId } } }),
+        this.db.cq.count({ where: { classId: validatedId } }),
       ]);
 
       return {
@@ -309,6 +333,7 @@ export class AcademicClassService {
     id: string,
   ): Promise<ClassStatisticsData | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
       const [
         subjects,
         chapterCount,
@@ -318,7 +343,7 @@ export class AcademicClassService {
         cqCount,
       ] = await Promise.all([
         this.db.academicSubject.findMany({
-          where: { classId: id },
+          where: { classId: validatedId },
           select: {
             id: true,
             displayName: true,
@@ -330,15 +355,19 @@ export class AcademicClassService {
           },
           orderBy: { position: "asc" },
         }),
-        this.db.academicChapter.count({ where: { subject: { classId: id } } }),
+        this.db.academicChapter.count({
+          where: { subject: { classId: validatedId } },
+        }),
         this.db.academicTopic.count({
-          where: { chapter: { subject: { classId: id } } },
+          where: { chapter: { subject: { classId: validatedId } } },
         }),
         this.db.academicSubTopic.count({
-          where: { topic: { chapter: { subject: { classId: id } } } },
+          where: {
+            topic: { chapter: { subject: { classId: validatedId } } },
+          },
         }),
-        this.db.mcq.count({ where: { subject: { classId: id } } }),
-        this.db.cq.count({ where: { classId: id } }),
+        this.db.mcq.count({ where: { subject: { classId: validatedId } } }),
+        this.db.cq.count({ where: { classId: validatedId } }),
       ]);
 
       const totalChapters = subjects.reduce(
@@ -378,13 +407,14 @@ export class AcademicClassService {
   async getRecentTopics(input: {
     classId: string;
     limit: number;
-  }): Promise<RecentTopicResponse[] | undefined> {
+  }): Promise<ClassRecentTopicResponse[] | undefined> {
     try {
+      const validatedClassId = uuidSchema.parse(input.classId);
       const topics = await this.db.academicTopic.findMany({
         where: {
           chapter: {
             subject: {
-              classId: input.classId,
+              classId: validatedClassId,
             },
           },
         },

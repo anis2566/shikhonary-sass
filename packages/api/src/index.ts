@@ -25,6 +25,12 @@ export * from "./services/academic-subtopic.service";
 export * from "./services/mcq.service";
 export * from "./services/student.service";
 export * from "./services/batch.service";
+export {
+  AcademicTreeService,
+  type AcademicTreeSummary,
+  type AcademicTreeCounts,
+  type AcademicTreeSearchResults,
+} from "./services/academic-tree.service";
 
 // Export shared types and schemas
 export * from "./shared/pagination";

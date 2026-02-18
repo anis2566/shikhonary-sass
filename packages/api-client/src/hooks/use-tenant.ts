@@ -14,28 +14,55 @@ import { useTenantFilters } from "../filters/client";
 // ============================================================================
 
 /**
- * Mutation hook for creating a tenant
+ * Mutation hook for creating a tenant.
+ * Accepts optional callbacks so the call site can drive provisioning UI.
  */
-export function useCreateTenant() {
+export function useCreateTenant(callbacks?: {
+  onMutate?: () => void;
+  onSuccess?: (data: any) => void;
+  onError?: (error: any) => void;
+}) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
-  return useMutation({
+  const mutation = useMutation({
     ...trpc.tenant.create.mutationOptions(),
     onError: (error) => {
-      toast.error(error.message || "Failed to create tenant");
+      callbacks?.onError?.(error);
+      if (!callbacks?.onError) {
+        toast.error(error.message || "Failed to create tenant");
+      }
     },
     onSuccess: async (data) => {
       if (data.success) {
-        toast.success(data.message);
         await queryClient.invalidateQueries({
           queryKey: trpc.tenant.list.queryKey(),
         });
+        callbacks?.onSuccess?.(data);
+        if (!callbacks?.onSuccess) {
+          toast.success(data.message);
+        }
       } else {
-        toast.error(data.message);
+        callbacks?.onError?.(new Error(data.message));
+        if (!callbacks?.onError) {
+          toast.error(data.message);
+        }
       }
     },
   });
+
+  return {
+    ...mutation,
+    // Wrap mutate/mutateAsync to fire onMutate callback before the request
+    mutate: (...args: Parameters<typeof mutation.mutate>) => {
+      callbacks?.onMutate?.();
+      mutation.mutate(...args);
+    },
+    mutateAsync: async (...args: Parameters<typeof mutation.mutateAsync>) => {
+      callbacks?.onMutate?.();
+      return mutation.mutateAsync(...args);
+    },
+  };
 }
 
 /**

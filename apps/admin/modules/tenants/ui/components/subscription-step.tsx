@@ -31,7 +31,7 @@ export function SubscriptionStep({ form }: SubscriptionStepProps) {
   const selectedPlan = plansData?.find((p) => p.id === selectedPlanId);
 
   const inputClasses =
-    "h-12 bg-background/50 border-border/50 rounded-xl px-4 focus:ring-primary/20 transition-all shadow-soft font-semibold";
+    "h-12 bg-background/50 border-border/50 rounded-xl px-4 focus:ring-primary/20 transition-all shadow-soft font-semibold w-full";
   const labelClasses =
     "text-sm font-bold uppercase tracking-wider text-muted-foreground";
 

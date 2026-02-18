@@ -22,7 +22,6 @@ export function FormNavigation({
   isValidating,
 }: FormNavigationProps) {
   const isLastStep = currentStep === totalSteps;
-
   return (
     <div className="flex items-center justify-between gap-3 pt-8 border-t border-border/30">
       <Button
@@ -37,8 +36,8 @@ export function FormNavigation({
       </Button>
 
       <Button
-        type={isLastStep ? "submit" : "button"}
-        onClick={isLastStep ? undefined : onNext}
+        type="button"
+        onClick={onNext}
         disabled={isSubmitting || isValidating}
         className="h-12 px-8 bg-primary text-primary-foreground rounded-xl shadow-glow font-bold hover:scale-[1.02] active:scale-[0.98] transition-all min-w-[140px] group"
       >

@@ -1,3 +1,4 @@
+import { z } from "zod";
 import {
   type PrismaClient,
   type AcademicSubject,
@@ -5,7 +6,11 @@ import {
   type AcademicChapter,
   type AcademicTopic,
 } from "@workspace/db";
-import { type AcademicSubjectFormValues } from "@workspace/schema";
+import {
+  academicSubjectFormSchema,
+  updateAcademicSubjectSchema,
+  uuidSchema,
+} from "@workspace/schema";
 import { handlePrismaError } from "../middleware/error-handler";
 import {
   buildPagination,
@@ -80,13 +85,20 @@ export interface RecentChapterResponse {
   updatedAt: Date;
 }
 
-export interface RecentTopicResponse {
+export interface SubjectRecentTopicResponse {
   id: string;
   name: string;
   chapterName: string;
   subjectName: string;
   updatedAt: Date;
 }
+
+const reorderItemsSchema = z.array(
+  z.object({
+    id: uuidSchema,
+    position: z.number().int().min(0),
+  }),
+);
 
 export class AcademicSubjectService {
   constructor(private db: PrismaClient) {}
@@ -135,8 +147,9 @@ export class AcademicSubjectService {
 
   async getById(id: string): Promise<SubjectWithRelations | null | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
       return (await this.db.academicSubject.findUnique({
-        where: { id },
+        where: { id: validatedId },
         include: {
           class: true,
           chapters: {
@@ -158,10 +171,9 @@ export class AcademicSubjectService {
     }
   }
 
-  async create(
-    data: AcademicSubjectFormValues,
-  ): Promise<AcademicSubject | undefined> {
+  async create(input: AcademicSubject): Promise<AcademicSubject | undefined> {
     try {
+      const data = academicSubjectFormSchema.parse(input);
       if (data.position === undefined) {
         const count = await this.db.academicSubject.count({
           where: { classId: data.classId },
@@ -176,11 +188,13 @@ export class AcademicSubjectService {
 
   async update(
     id: string,
-    data: Partial<AcademicSubjectFormValues>,
+    input: AcademicSubject,
   ): Promise<AcademicSubject | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
+      const data = updateAcademicSubjectSchema.parse(input);
       return await this.db.academicSubject.update({
-        where: { id },
+        where: { id: validatedId },
         data,
       });
     } catch (error) {
@@ -190,8 +204,9 @@ export class AcademicSubjectService {
 
   async delete(id: string): Promise<AcademicSubject | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
       return await this.db.academicSubject.delete({
-        where: { id },
+        where: { id: validatedId },
       });
     } catch (error) {
       handlePrismaError(error);
@@ -202,8 +217,9 @@ export class AcademicSubjectService {
     items: { id: string; position: number }[],
   ): Promise<AcademicSubject[] | undefined> {
     try {
+      const validatedItems = reorderItemsSchema.parse(items);
       return await this.db.$transaction(
-        items.map((item) =>
+        validatedItems.map((item) =>
           this.db.academicSubject.update({
             where: { id: item.id },
             data: { position: item.position },
@@ -246,8 +262,9 @@ export class AcademicSubjectService {
 
   async bulkActive(ids: string[]): Promise<{ count: number } | undefined> {
     try {
+      const validatedIds = z.array(uuidSchema).parse(ids);
       return await this.db.academicSubject.updateMany({
-        where: { id: { in: ids } },
+        where: { id: { in: validatedIds } },
         data: { isActive: true },
       });
     } catch (error) {
@@ -257,8 +274,9 @@ export class AcademicSubjectService {
 
   async bulkDeactive(ids: string[]): Promise<{ count: number } | undefined> {
     try {
+      const validatedIds = z.array(uuidSchema).parse(ids);
       return await this.db.academicSubject.updateMany({
-        where: { id: { in: ids } },
+        where: { id: { in: validatedIds } },
         data: { isActive: false },
       });
     } catch (error) {
@@ -268,8 +286,9 @@ export class AcademicSubjectService {
 
   async bulkDelete(ids: string[]): Promise<{ count: number } | undefined> {
     try {
+      const validatedIds = z.array(uuidSchema).parse(ids);
       return await this.db.academicSubject.deleteMany({
-        where: { id: { in: ids } },
+        where: { id: { in: validatedIds } },
       });
     } catch (error) {
       handlePrismaError(error);
@@ -280,6 +299,7 @@ export class AcademicSubjectService {
     id: string,
   ): Promise<SubjectDetailedStats | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
       const [
         chapterCount,
         activeChapterCount,
@@ -288,18 +308,18 @@ export class AcademicSubjectService {
         mcqCount,
         cqCount,
       ] = await Promise.all([
-        this.db.academicChapter.count({ where: { subjectId: id } }),
+        this.db.academicChapter.count({ where: { subjectId: validatedId } }),
         this.db.academicChapter.count({
-          where: { subjectId: id, isActive: true },
+          where: { subjectId: validatedId, isActive: true },
         }),
         this.db.academicTopic.count({
-          where: { chapter: { subjectId: id } },
+          where: { chapter: { subjectId: validatedId } },
         }),
         this.db.academicSubTopic.count({
-          where: { topic: { chapter: { subjectId: id } } },
+          where: { topic: { chapter: { subjectId: validatedId } } },
         }),
-        this.db.mcq.count({ where: { subjectId: id } }),
-        this.db.cq.count({ where: { subjectId: id } }),
+        this.db.mcq.count({ where: { subjectId: validatedId } }),
+        this.db.cq.count({ where: { subjectId: validatedId } }),
       ]);
 
       return {
@@ -315,7 +335,7 @@ export class AcademicSubjectService {
             completionRate:
               topicCount > 0
                 ? Math.min(Math.round((topicCount / 20) * 100), 100)
-                : 0, // Assuming 20 topics per subject target
+                : 0,
           },
         },
       };
@@ -328,10 +348,11 @@ export class AcademicSubjectService {
     id: string,
   ): Promise<SubjectStatisticsData | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
       const [chapters, topicCount, subTopicCount, mcqCount, cqCount] =
         await Promise.all([
           this.db.academicChapter.findMany({
-            where: { subjectId: id },
+            where: { subjectId: validatedId },
             select: {
               id: true,
               displayName: true,
@@ -344,13 +365,13 @@ export class AcademicSubjectService {
             orderBy: { position: "asc" },
           }),
           this.db.academicTopic.count({
-            where: { chapter: { subjectId: id } },
+            where: { chapter: { subjectId: validatedId } },
           }),
           this.db.academicSubTopic.count({
-            where: { topic: { chapter: { subjectId: id } } },
+            where: { topic: { chapter: { subjectId: validatedId } } },
           }),
-          this.db.mcq.count({ where: { subjectId: id } }),
-          this.db.cq.count({ where: { subjectId: id } }),
+          this.db.mcq.count({ where: { subjectId: validatedId } }),
+          this.db.cq.count({ where: { subjectId: validatedId } }),
         ]);
 
       const totalTopics = chapters.reduce(
@@ -388,8 +409,9 @@ export class AcademicSubjectService {
     limit: number;
   }): Promise<RecentChapterResponse[] | undefined> {
     try {
+      const validatedSubjectId = uuidSchema.parse(input.subjectId);
       const chapters = await this.db.academicChapter.findMany({
-        where: { subjectId: input.subjectId },
+        where: { subjectId: validatedSubjectId },
         orderBy: { updatedAt: "desc" },
         take: input.limit,
         include: {
@@ -418,12 +440,13 @@ export class AcademicSubjectService {
   async getRecentTopics(input: {
     subjectId: string;
     limit: number;
-  }): Promise<RecentTopicResponse[] | undefined> {
+  }): Promise<SubjectRecentTopicResponse[] | undefined> {
     try {
+      const validatedSubjectId = uuidSchema.parse(input.subjectId);
       const topics = await this.db.academicTopic.findMany({
         where: {
           chapter: {
-            subjectId: input.subjectId,
+            subjectId: validatedSubjectId,
           },
         },
         orderBy: { updatedAt: "desc" },

@@ -1,5 +1,10 @@
+import { z } from "zod";
 import { type AcademicSubTopic, type PrismaClient } from "@workspace/db";
-import { type AcademicSubTopicFormValues } from "@workspace/schema";
+import {
+  academicSubTopicFormSchema,
+  updateAcademicSubTopicSchema,
+  uuidSchema,
+} from "@workspace/schema";
 import { handlePrismaError } from "../middleware/error-handler";
 import {
   buildPagination,
@@ -64,6 +69,13 @@ export interface RecentQuestionsResponse {
   cqs: any[];
 }
 
+const reorderItemsSchema = z.array(
+  z.object({
+    id: uuidSchema,
+    position: z.number().int().min(0),
+  }),
+);
+
 export class AcademicSubTopicService {
   constructor(private db: PrismaClient) {}
 
@@ -127,8 +139,9 @@ export class AcademicSubTopicService {
 
   async getById(id: string): Promise<SubTopicWithRelations | null | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
       const item = await this.db.academicSubTopic.findUnique({
-        where: { id },
+        where: { id: validatedId },
         include: {
           topic: {
             include: {
@@ -146,10 +159,9 @@ export class AcademicSubTopicService {
     }
   }
 
-  async create(
-    data: AcademicSubTopicFormValues,
-  ): Promise<AcademicSubTopic | undefined> {
+  async create(input: AcademicSubTopic): Promise<AcademicSubTopic | undefined> {
     try {
+      const data = academicSubTopicFormSchema.parse(input);
       const { classId, subjectId, chapterId, ...prismaData } = data;
 
       if (prismaData.position === undefined) {
@@ -158,7 +170,9 @@ export class AcademicSubTopicService {
         });
         (prismaData as any).position = count;
       }
-      return await this.db.academicSubTopic.create({ data: prismaData as any });
+      return await this.db.academicSubTopic.create({
+        data: prismaData as any,
+      });
     } catch (error) {
       handlePrismaError(error);
     }
@@ -166,12 +180,14 @@ export class AcademicSubTopicService {
 
   async update(
     id: string,
-    data: Partial<AcademicSubTopicFormValues>,
+    input: AcademicSubTopic,
   ): Promise<AcademicSubTopic | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
+      const data = updateAcademicSubTopicSchema.parse(input);
       const { classId, subjectId, chapterId, ...prismaData } = data;
       return await this.db.academicSubTopic.update({
-        where: { id },
+        where: { id: validatedId },
         data: prismaData as any,
       });
     } catch (error) {
@@ -181,8 +197,9 @@ export class AcademicSubTopicService {
 
   async delete(id: string): Promise<AcademicSubTopic | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
       return await this.db.academicSubTopic.delete({
-        where: { id },
+        where: { id: validatedId },
       });
     } catch (error) {
       handlePrismaError(error);
@@ -193,8 +210,9 @@ export class AcademicSubTopicService {
     items: { id: string; position: number }[],
   ): Promise<AcademicSubTopic[] | undefined> {
     try {
+      const validatedItems = reorderItemsSchema.parse(items);
       return await this.db.$transaction(
-        items.map((item) =>
+        validatedItems.map((item) =>
           this.db.academicSubTopic.update({
             where: { id: item.id },
             data: { position: item.position },
@@ -208,8 +226,9 @@ export class AcademicSubTopicService {
 
   async bulkActive(ids: string[]): Promise<{ count: number } | undefined> {
     try {
+      const validatedIds = z.array(uuidSchema).parse(ids);
       return await this.db.academicSubTopic.updateMany({
-        where: { id: { in: ids } },
+        where: { id: { in: validatedIds } },
         data: { isActive: true },
       });
     } catch (error) {
@@ -219,8 +238,9 @@ export class AcademicSubTopicService {
 
   async bulkDeactive(ids: string[]): Promise<{ count: number } | undefined> {
     try {
+      const validatedIds = z.array(uuidSchema).parse(ids);
       return await this.db.academicSubTopic.updateMany({
-        where: { id: { in: ids } },
+        where: { id: { in: validatedIds } },
         data: { isActive: false },
       });
     } catch (error) {
@@ -230,8 +250,9 @@ export class AcademicSubTopicService {
 
   async bulkDelete(ids: string[]): Promise<{ count: number } | undefined> {
     try {
+      const validatedIds = z.array(uuidSchema).parse(ids);
       return await this.db.academicSubTopic.deleteMany({
-        where: { id: { in: ids } },
+        where: { id: { in: validatedIds } },
       });
     } catch (error) {
       handlePrismaError(error);
@@ -272,13 +293,15 @@ export class AcademicSubTopicService {
       handlePrismaError(error);
     }
   }
+
   async getDetailedStats(
     id: string,
   ): Promise<SubTopicDetailedStats | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
       const [mcqCount, cqCount] = await Promise.all([
-        this.db.mcq.count({ where: { subTopicId: id } }),
-        this.db.cq.count({ where: { subTopicId: id } }),
+        this.db.mcq.count({ where: { subTopicId: validatedId } }),
+        this.db.cq.count({ where: { subTopicId: validatedId } }),
       ]);
 
       return {
@@ -297,11 +320,12 @@ export class AcademicSubTopicService {
     id: string,
   ): Promise<SubTopicStatisticsData | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
       const [mcqCount, cqCount, mcqs] = await Promise.all([
-        this.db.mcq.count({ where: { subTopicId: id } }),
-        this.db.cq.count({ where: { subTopicId: id } }),
+        this.db.mcq.count({ where: { subTopicId: validatedId } }),
+        this.db.cq.count({ where: { subTopicId: validatedId } }),
         this.db.mcq.findMany({
-          where: { subTopicId: id },
+          where: { subTopicId: validatedId },
           select: { type: true },
         }),
       ]);
@@ -336,14 +360,15 @@ export class AcademicSubTopicService {
     limit: number;
   }): Promise<RecentQuestionsResponse | undefined> {
     try {
+      const validatedSubTopicId = uuidSchema.parse(input.subTopicId);
       const [mcqs, cqs] = await Promise.all([
         this.db.mcq.findMany({
-          where: { subTopicId: input.subTopicId },
+          where: { subTopicId: validatedSubTopicId },
           orderBy: { updatedAt: "desc" },
           take: input.limit,
         }),
         this.db.cq.findMany({
-          where: { subTopicId: input.subTopicId },
+          where: { subTopicId: validatedSubTopicId },
           orderBy: { updatedAt: "desc" },
           take: input.limit,
         }),

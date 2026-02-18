@@ -10,13 +10,10 @@ import { mcqRouter } from "../routers/mcq";
 import { studentRouter } from "../routers/student";
 import { batchRouter } from "../routers/batch";
 import { subscriptionPlanRouter } from "../routers/subscription-plan";
+import { academicTreeRouter } from "../routers/academic-tree";
 
 // Explicitly import branded types to ensure they are available for inference in this module
-import type {
-  TRPCContext,
-  PrismaClient,
-  TenantPrismaClient,
-} from "./context";
+import type { TRPCContext, PrismaClient, TenantPrismaClient } from "./context";
 
 /**
  * Root Router Composition.
@@ -33,6 +30,7 @@ export const appRouter = t.router({
   mcq: mcqRouter,
   student: studentRouter,
   batch: batchRouter,
+  academicTree: academicTreeRouter,
 });
 
 /**

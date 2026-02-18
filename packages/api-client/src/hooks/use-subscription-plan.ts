@@ -2,6 +2,7 @@
 
 import {
   useMutation,
+  useQuery,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
@@ -64,7 +65,7 @@ export function useSubscriptionUsage(tenantId: string) {
  */
 export function useSubscriptionPlansForSelection() {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.subscriptionPlan.forSelection.queryOptions(),
     select: (data) => data.data,
   });

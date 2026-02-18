@@ -11,6 +11,7 @@ import {
   ExternalLink,
   UsersRound,
   Building,
+  Database,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -50,6 +51,7 @@ interface TenantWithCounts {
   customDomain?: string | null | undefined;
   isActive: boolean;
   isSuspended: boolean;
+  databaseStatus?: string | null;
   subscription?: {
     status: string;
     plan: {
@@ -129,6 +131,14 @@ const columns: Column<TenantWithCounts>[] = [
     ),
   },
   {
+    key: "databaseStatus",
+    header: "Database",
+    hideOnMobile: true,
+    render: (tenant) => (
+      <DatabaseStatusBadge status={tenant.databaseStatus ?? "PENDING"} />
+    ),
+  },
+  {
     key: "isActive",
     header: "Status",
     render: (tenant) => (
@@ -144,6 +154,54 @@ interface TenantListProps {
   onDeactivate: (id: string) => Promise<void>;
   isLoading: boolean;
   handleDelete: (id: string, name: string) => void;
+}
+
+function DatabaseStatusBadge({ status }: { status: string }) {
+  const configs: Record<
+    string,
+    { color: string; bg: string; border: string; pulse?: boolean }
+  > = {
+    PENDING: {
+      color: "text-amber-500",
+      bg: "bg-amber-500/10",
+      border: "border-amber-500/20",
+    },
+    PROVISIONING: {
+      color: "text-blue-500",
+      bg: "bg-blue-500/10",
+      border: "border-blue-500/20",
+      pulse: true,
+    },
+    ACTIVE: {
+      color: "text-green-500",
+      bg: "bg-green-500/10",
+      border: "border-green-500/20",
+    },
+    FAILED: {
+      color: "text-destructive",
+      bg: "bg-destructive/10",
+      border: "border-destructive/20",
+    },
+    INACTIVE: {
+      color: "text-muted-foreground",
+      bg: "bg-muted/50",
+      border: "border-transparent",
+    },
+  };
+  const cfg = configs[status] ?? configs.PENDING!;
+  return (
+    <div
+      className={cn(
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase tracking-wider transition-all",
+        cfg.color,
+        cfg.bg,
+        cfg.border,
+      )}
+    >
+      <Database className={cn("w-3 h-3", cfg.pulse && "animate-pulse")} />
+      {status}
+    </div>
+  );
 }
 
 function StatusBadge({ active }: { active: boolean }) {

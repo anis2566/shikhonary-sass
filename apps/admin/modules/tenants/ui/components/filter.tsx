@@ -26,8 +26,8 @@ import {
   TENANT_TYPE,
   ACTIVE_STATUS,
   activeStatusOptions,
-  DEFAULT_PAGE_SIZE,
   DEFAULT_PAGE,
+  DEFAULT_PAGE_SIZE,
   tenantTypeOptions,
 } from "@workspace/utils";
 import { useTenantFilters } from "@workspace/api-client";
@@ -59,7 +59,6 @@ export const Filter = ({ isLoading }: FilterProps) => {
   };
 
   const handleSortChange = (value: string) => {
-    // Parse the sort value (e.g., "name-asc" or "createdAt-desc")
     const [sortBy, sortOrder] = value.split("-") as [string, "asc" | "desc"];
     setFilters({
       ...filters,
@@ -80,11 +79,17 @@ export const Filter = ({ isLoading }: FilterProps) => {
       ? `${filters.sortBy}-${filters.sortOrder}`
       : "";
 
+  // nuqs returns defaults (not null) for fields with .withDefault(), so we
+  // compare against the actual default values — same pattern as academic-class filter.
+  const DEFAULT_SORT_BY = "createdAt";
+  const DEFAULT_SORT_ORDER = "desc";
+
   const hasActiveFilters =
     !!filters.isActive ||
-    !!filters.sortBy ||
     !!filters.type ||
     !!filters.search ||
+    filters.sortBy !== DEFAULT_SORT_BY ||
+    filters.sortOrder !== DEFAULT_SORT_ORDER ||
     filters.limit !== DEFAULT_PAGE_SIZE ||
     filters.page !== DEFAULT_PAGE;
 

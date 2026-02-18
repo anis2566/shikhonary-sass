@@ -8,6 +8,8 @@ import { ErrorBoundary } from "react-error-boundary";
 import type { AppRouter } from "@workspace/api";
 import { appRouter, createTRPCContext } from "@workspace/api";
 
+import { ShikhonaryLoader } from "@workspace/ui/shared/shikhonary-loader";
+
 import { createQueryClient } from "./query-client";
 
 /**
@@ -41,7 +43,7 @@ export function HydrateClient({ children, suspenseUi }: HydrateClientProps) {
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <ErrorBoundary fallback={<div>Something went wrong</div>}>
-        <Suspense fallback={suspenseUi || <div>Loading...</div>}>
+        <Suspense fallback={suspenseUi || <ShikhonaryLoader />}>
           {children}
         </Suspense>
       </ErrorBoundary>

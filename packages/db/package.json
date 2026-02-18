@@ -16,6 +16,14 @@
     "./scripts/delete-tenant-db": {
       "types": "./scripts/delete-tenant-db.ts",
       "default": "./scripts/delete-tenant-db.ts"
+    },
+    "./scripts/backup-tenant-db": {
+      "types": "./scripts/backup-tenant-db.ts",
+      "default": "./scripts/backup-tenant-db.ts"
+    },
+    "./scripts/migrate-all-tenants": {
+      "types": "./scripts/migrate-all-tenants.ts",
+      "default": "./scripts/migrate-all-tenants.ts"
     }
   },
   "scripts": {

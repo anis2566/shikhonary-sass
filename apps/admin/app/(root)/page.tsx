@@ -1,10 +1,11 @@
 import DashboardHeader from "@/modules/layout/ui/layout/dashboard-header";
+import { ShikhonaryLoader } from "@workspace/ui/shared/shikhonary-loader";
 
 export default async function Page() {
-  console.log("done");
   return (
     <div className="min-h-screen">
       <DashboardHeader title="Dashboard" subtitle="Welcome back, Super Admin" />
+      <ShikhonaryLoader />
     </div>
   );
 }

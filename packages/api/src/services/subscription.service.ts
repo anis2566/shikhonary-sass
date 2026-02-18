@@ -1,6 +1,17 @@
+import { z } from "zod";
 import { type PrismaClient } from "@workspace/db";
-import { type SubscriptionPlan, type Subscription } from "@workspace/schema";
+import {
+  type SubscriptionPlan,
+  type Subscription,
+  uuidSchema,
+} from "@workspace/schema";
 import { handlePrismaError } from "../middleware/error-handler";
+
+const assignPlanSchema = z.object({
+  tenantId: uuidSchema,
+  planId: uuidSchema,
+  billingCycle: z.enum(["monthly", "yearly"]),
+});
 
 /**
  * Service for managing subscriptions and plans
@@ -29,8 +40,9 @@ export class SubscriptionService {
     tenantId: string,
   ): Promise<(Subscription & { plan: SubscriptionPlan }) | null | undefined> {
     try {
+      const validatedTenantId = uuidSchema.parse(tenantId);
       const item = await this.db.subscription.findUnique({
-        where: { tenantId },
+        where: { tenantId: validatedTenantId },
         include: { plan: true },
       });
       return item as any;
@@ -42,12 +54,10 @@ export class SubscriptionService {
   /**
    * Assign or upgrade a plan for a tenant
    */
-  async assignPlan(params: {
-    tenantId: string;
-    planId: string;
-    billingCycle: "monthly" | "yearly";
-  }): Promise<Subscription | undefined> {
+  async assignPlan(input: Subscription): Promise<Subscription | undefined> {
     try {
+      const params = assignPlanSchema.parse(input);
+
       const plan = await this.db.subscriptionPlan.findUnique({
         where: { id: params.planId },
       });
@@ -83,8 +93,9 @@ export class SubscriptionService {
    */
   async getUsageStats(tenantId: string): Promise<any | undefined> {
     try {
+      const validatedTenantId = uuidSchema.parse(tenantId);
       const tenant = await this.db.tenant.findUnique({
-        where: { id: tenantId },
+        where: { id: validatedTenantId },
         include: { subscription: { include: { plan: true } } },
       });
 
@@ -118,7 +129,6 @@ export class SubscriptionService {
   /**
    * Get all active plans for selection
    */
-
   async forSelection(): Promise<
     | {
         id: string;

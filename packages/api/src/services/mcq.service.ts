@@ -1,5 +1,11 @@
+import { z } from "zod";
 import { type PrismaClient } from "@workspace/db";
-import { type MCQ } from "@workspace/schema";
+import {
+  type MCQ,
+  mcqFormSchema,
+  updateMCQSchema,
+  uuidSchema,
+} from "@workspace/schema";
 import { handlePrismaError } from "../middleware/error-handler";
 import {
   buildPagination,
@@ -12,7 +18,7 @@ import {
 } from "../shared/pagination";
 
 export class McqService {
-  constructor(private db: PrismaClient) { }
+  constructor(private db: PrismaClient) {}
 
   async list(input: {
     page: number;
@@ -40,10 +46,7 @@ export class McqService {
           where,
           orderBy,
           ...pagination,
-          include: {
-            subject: true,
-            chapter: true,
-          },
+          include: { subject: true, chapter: true },
         }),
         this.db.mcq.count({ where }),
       ]);
@@ -61,34 +64,33 @@ export class McqService {
 
   async getById(id: string): Promise<any | null | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
       return await this.db.mcq.findUnique({
-        where: { id },
-        include: {
-          subject: true,
-          chapter: true,
-          topic: true,
-          subtopic: true,
-        },
+        where: { id: validatedId },
+        include: { subject: true, chapter: true, topic: true, subtopic: true },
       });
     } catch (error) {
       handlePrismaError(error);
     }
   }
 
-  async create(data: any): Promise<MCQ | undefined> {
+  async create(input: MCQ): Promise<MCQ | undefined> {
     try {
-      const item = await this.db.mcq.create({ data });
+      const data = mcqFormSchema.parse(input);
+      const item = await this.db.mcq.create({ data: data as any });
       return item as unknown as MCQ;
     } catch (error) {
       handlePrismaError(error);
     }
   }
 
-  async update(id: string, data: any): Promise<MCQ | undefined> {
+  async update(id: string, input: MCQ): Promise<MCQ | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
+      const data = updateMCQSchema.parse(input);
       const item = await this.db.mcq.update({
-        where: { id },
-        data,
+        where: { id: validatedId },
+        data: data as any,
       });
       return item as unknown as MCQ;
     } catch (error) {
@@ -98,9 +100,8 @@ export class McqService {
 
   async delete(id: string): Promise<MCQ | undefined> {
     try {
-      const item = await this.db.mcq.delete({
-        where: { id },
-      });
+      const validatedId = uuidSchema.parse(id);
+      const item = await this.db.mcq.delete({ where: { id: validatedId } });
       return item as unknown as MCQ;
     } catch (error) {
       handlePrismaError(error);
@@ -109,8 +110,9 @@ export class McqService {
 
   async bulkDelete(ids: string[]): Promise<any | undefined> {
     try {
+      const validatedIds = z.array(uuidSchema).parse(ids);
       return await this.db.mcq.deleteMany({
-        where: { id: { in: ids } },
+        where: { id: { in: validatedIds } },
       });
     } catch (error) {
       handlePrismaError(error);
@@ -121,13 +123,11 @@ export class McqService {
     try {
       const where = chapterId ? { chapterId } : {};
       const total = await this.db.mcq.count({ where });
-      // Example of type-based stats
       const types = await this.db.mcq.groupBy({
         by: ["type"],
         where,
         _count: true,
       });
-
       return { total, types };
     } catch (error) {
       handlePrismaError(error);

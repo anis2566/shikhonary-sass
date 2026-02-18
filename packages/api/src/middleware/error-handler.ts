@@ -1,10 +1,23 @@
 import { TRPCError } from "@trpc/server";
 import { Prisma } from "@workspace/db";
+import { ZodError } from "zod";
 
 /**
  * Handles Prisma errors and maps them to appropriate TRPC errors
  */
 export function handlePrismaError(error: any): never {
+  // Zod validation error
+  if (error instanceof ZodError) {
+    const message = error.errors
+      .map((e) => `${e.path.join(".") || "input"}: ${e.message}`)
+      .join("; ");
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message,
+      cause: error,
+    });
+  }
+
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     // Unique constraint violation
     if (error.code === "P2002") {

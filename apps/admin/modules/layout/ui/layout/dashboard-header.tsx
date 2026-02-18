@@ -27,8 +27,8 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   subtitle,
 }) => {
   return (
-    <header className="sticky top-0 z-header bg-background/40 backdrop-blur-xl border-b border-border/50">
-      <div className="flex items-center justify-between px-6 lg:px-8 py-4">
+    <header className="sticky top-0 z-20 bg-background/40 backdrop-blur-xl border-b border-border/50">
+      <div className="flex items-center justify-between px-6 lg:px-8 py-[13px]">
         {/* Left: Title */}
         <div className="min-w-0 flex-1 pl-12 lg:pl-0">
           <div className="flex flex-col">

@@ -1,5 +1,11 @@
+import { z } from "zod";
 import { handlePrismaError } from "../middleware/error-handler";
-import { type Student } from "@workspace/schema";
+import {
+  type Student,
+  studentFormSchema,
+  updateStudentSchema,
+  uuidSchema,
+} from "@workspace/schema";
 import {
   buildPagination,
   buildOrderBy,
@@ -17,7 +23,7 @@ export class StudentService {
   /**
    * Note: This service expects a Tenant-specific Prisma Client
    */
-  constructor(private db: any) { }
+  constructor(private db: any) {}
 
   async list(input: {
     page: number;
@@ -41,9 +47,7 @@ export class StudentService {
           where,
           orderBy,
           ...pagination,
-          include: {
-            batch: true,
-          },
+          include: { batch: true },
         }),
         this.db.student.count({ where }),
       ]);
@@ -61,19 +65,19 @@ export class StudentService {
 
   async getById(id: string): Promise<any | null | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
       return await this.db.student.findUnique({
-        where: { id },
-        include: {
-          batch: true,
-        },
+        where: { id: validatedId },
+        include: { batch: true },
       });
     } catch (error) {
       handlePrismaError(error);
     }
   }
 
-  async create(data: any): Promise<Student | undefined> {
+  async create(input: Student): Promise<Student | undefined> {
     try {
+      const data = studentFormSchema.parse(input);
       const item = await this.db.student.create({ data });
       return item as unknown as Student;
     } catch (error) {
@@ -81,10 +85,12 @@ export class StudentService {
     }
   }
 
-  async update(id: string, data: any): Promise<Student | undefined> {
+  async update(id: string, input: Student): Promise<Student | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
+      const data = updateStudentSchema.parse(input);
       const item = await this.db.student.update({
-        where: { id },
+        where: { id: validatedId },
         data,
       });
       return item as unknown as Student;
@@ -95,19 +101,19 @@ export class StudentService {
 
   async delete(id: string): Promise<Student | undefined> {
     try {
-      const item = await this.db.student.delete({
-        where: { id },
-      });
+      const validatedId = uuidSchema.parse(id);
+      const item = await this.db.student.delete({ where: { id: validatedId } });
       return item as unknown as Student;
     } catch (error) {
       handlePrismaError(error);
     }
   }
 
-  async bulkImport(students: any[]): Promise<any | undefined> {
+  async bulkImport(students: unknown[]): Promise<any | undefined> {
     try {
+      const data = z.array(studentFormSchema).parse(students);
       return await this.db.student.createMany({
-        data: students,
+        data,
         skipDuplicates: true,
       });
     } catch (error) {

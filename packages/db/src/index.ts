@@ -1,4 +1,3 @@
-console.log("[@workspace/db] Module index.ts loaded");
 export * from "./client";
 export * from "./tenant-client";
 export * from "./health";

@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { handlePrismaError } from "../middleware/error-handler";
 import {
   buildPagination,
@@ -13,7 +14,11 @@ import {
   type AcademicTopic,
   type PrismaClient,
 } from "@workspace/db";
-import { type AcademicChapterFormValues } from "@workspace/schema";
+import {
+  academicChapterFormSchema,
+  updateAcademicChapterSchema,
+  uuidSchema,
+} from "@workspace/schema";
 
 export interface ChapterWithRelations extends AcademicChapter {
   subject?: {
@@ -79,6 +84,13 @@ export interface RecentTopicsResponse {
   })[];
 }
 
+const reorderItemsSchema = z.array(
+  z.object({
+    id: uuidSchema,
+    position: z.number().int().min(0),
+  }),
+);
+
 export class AcademicChapterService {
   constructor(private db: PrismaClient) {}
 
@@ -123,8 +135,9 @@ export class AcademicChapterService {
 
   async getById(id: string): Promise<ChapterWithRelations | null | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
       return await this.db.academicChapter.findUnique({
-        where: { id },
+        where: { id: validatedId },
         include: {
           subject: {
             include: {
@@ -157,17 +170,16 @@ export class AcademicChapterService {
     }
   }
 
-  async create(
-    data: AcademicChapterFormValues,
-  ): Promise<AcademicChapter | undefined> {
+  async create(input: AcademicChapter): Promise<AcademicChapter | undefined> {
     try {
+      const data = academicChapterFormSchema.parse(input);
       if (data.position === undefined) {
         const count = await this.db.academicChapter.count({
           where: { subjectId: data.subjectId },
         });
         data.position = count;
       }
-      return await this.db.academicChapter.create({ data: data });
+      return await this.db.academicChapter.create({ data });
     } catch (error) {
       handlePrismaError(error);
     }
@@ -175,12 +187,14 @@ export class AcademicChapterService {
 
   async update(
     id: string,
-    data: Partial<AcademicChapterFormValues>,
+    input: AcademicChapter,
   ): Promise<AcademicChapter | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
+      const data = updateAcademicChapterSchema.parse(input);
       return await this.db.academicChapter.update({
-        where: { id },
-        data: data,
+        where: { id: validatedId },
+        data,
       });
     } catch (error) {
       handlePrismaError(error);
@@ -189,8 +203,9 @@ export class AcademicChapterService {
 
   async delete(id: string): Promise<AcademicChapter | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
       return await this.db.academicChapter.delete({
-        where: { id },
+        where: { id: validatedId },
       });
     } catch (error) {
       handlePrismaError(error);
@@ -201,8 +216,9 @@ export class AcademicChapterService {
     items: { id: string; position: number }[],
   ): Promise<AcademicChapter[] | undefined> {
     try {
+      const validatedItems = reorderItemsSchema.parse(items);
       return await this.db.$transaction(
-        items.map((item) =>
+        validatedItems.map((item) =>
           this.db.academicChapter.update({
             where: { id: item.id },
             data: { position: item.position },
@@ -216,8 +232,9 @@ export class AcademicChapterService {
 
   async bulkActive(ids: string[]): Promise<{ count: number } | undefined> {
     try {
+      const validatedIds = z.array(uuidSchema).parse(ids);
       return await this.db.academicChapter.updateMany({
-        where: { id: { in: ids } },
+        where: { id: { in: validatedIds } },
         data: { isActive: true },
       });
     } catch (error) {
@@ -227,8 +244,9 @@ export class AcademicChapterService {
 
   async bulkDeactive(ids: string[]): Promise<{ count: number } | undefined> {
     try {
+      const validatedIds = z.array(uuidSchema).parse(ids);
       return await this.db.academicChapter.updateMany({
-        where: { id: { in: ids } },
+        where: { id: { in: validatedIds } },
         data: { isActive: false },
       });
     } catch (error) {
@@ -238,8 +256,9 @@ export class AcademicChapterService {
 
   async bulkDelete(ids: string[]): Promise<{ count: number } | undefined> {
     try {
+      const validatedIds = z.array(uuidSchema).parse(ids);
       return await this.db.academicChapter.deleteMany({
-        where: { id: { in: ids } },
+        where: { id: { in: validatedIds } },
       });
     } catch (error) {
       handlePrismaError(error);
@@ -271,20 +290,20 @@ export class AcademicChapterService {
     id: string,
   ): Promise<ChapterDetailedStats | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
       const [topicCount, subtopicCount, mcqCount, cqCount] = await Promise.all([
-        this.db.academicTopic.count({ where: { chapterId: id } }),
+        this.db.academicTopic.count({ where: { chapterId: validatedId } }),
         this.db.academicSubTopic.count({
-          where: { topic: { chapterId: id } },
+          where: { topic: { chapterId: validatedId } },
         }),
-        this.db.mcq.count({ where: { chapterId: id } }),
-        this.db.cq.count({ where: { chapterId: id } }),
+        this.db.mcq.count({ where: { chapterId: validatedId } }),
+        this.db.cq.count({ where: { chapterId: validatedId } }),
       ]);
 
-      // Calculate completion rate based on active topics vs total topics
       const [totalTopics, activeTopics] = await Promise.all([
-        this.db.academicTopic.count({ where: { chapterId: id } }),
+        this.db.academicTopic.count({ where: { chapterId: validatedId } }),
         this.db.academicTopic.count({
-          where: { chapterId: id, isActive: true },
+          where: { chapterId: validatedId, isActive: true },
         }),
       ]);
 
@@ -313,9 +332,10 @@ export class AcademicChapterService {
     id: string,
   ): Promise<ChapterStatisticsData | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
       const [topics, subtopicCount] = await Promise.all([
         this.db.academicTopic.findMany({
-          where: { chapterId: id },
+          where: { chapterId: validatedId },
           select: {
             id: true,
             displayName: true,
@@ -328,13 +348,13 @@ export class AcademicChapterService {
           orderBy: { position: "asc" },
         }),
         this.db.academicSubTopic.count({
-          where: { topic: { chapterId: id } },
+          where: { topic: { chapterId: validatedId } },
         }),
       ]);
 
       const [mcqCount, cqCount] = await Promise.all([
-        this.db.mcq.count({ where: { chapterId: id } }),
-        this.db.cq.count({ where: { chapterId: id } }),
+        this.db.mcq.count({ where: { chapterId: validatedId } }),
+        this.db.cq.count({ where: { chapterId: validatedId } }),
       ]);
 
       return {
@@ -342,7 +362,7 @@ export class AcademicChapterService {
           id: t.id,
           name: t.displayName,
           subtopics: t._count.subtopics,
-          percentage: 100 / (topics.length || 1), // Simple distribution for now
+          percentage: 100 / (topics.length || 1),
         })),
         questionBank: {
           mcqs: mcqCount,
@@ -365,8 +385,9 @@ export class AcademicChapterService {
     limit: number;
   }): Promise<RecentTopicsResponse | undefined> {
     try {
+      const validatedChapterId = uuidSchema.parse(input.chapterId);
       const topics = await this.db.academicTopic.findMany({
-        where: { chapterId: input.chapterId },
+        where: { chapterId: validatedChapterId },
         orderBy: { updatedAt: "desc" },
         take: input.limit,
         include: {

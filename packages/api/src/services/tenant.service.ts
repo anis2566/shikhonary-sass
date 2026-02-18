@@ -1,12 +1,13 @@
 import { z } from "zod";
 import { type PrismaClient } from "@workspace/db";
 import { provisionTenantDb } from "@workspace/db/scripts/provision-tenant-db";
+import { deleteTenantDb } from "@workspace/db/scripts/delete-tenant-db";
+import { backupTenantDb } from "@workspace/db/scripts/backup-tenant-db";
 import {
   tenantFormSchema,
   updateTenantSchema,
   uuidSchema,
   type Tenant,
-  type TenantFormValues,
 } from "@workspace/schema";
 import { handlePrismaError } from "../middleware/error-handler";
 import { buildPagination, buildOrderBy } from "../shared/query-builder";
@@ -36,7 +37,6 @@ export class TenantService {
     PaginatedResponse<Tenant & { _count: { members: number } }> | undefined
   > {
     try {
-      // Validate sortBy to prevent invalid column errors
       const validSortColumns = [
         "name",
         "email",
@@ -50,7 +50,6 @@ export class TenantService {
           ? input.sortBy
           : "createdAt";
 
-      // Build where clause manually to ensure only valid fields
       const where: any = {};
 
       if (typeof input.isActive === "boolean") {
@@ -102,8 +101,9 @@ export class TenantService {
    */
   async getById(id: string) {
     try {
+      const validatedId = uuidSchema.parse(id);
       const tenant = await this.db.tenant.findUnique({
-        where: { id: uuidSchema.parse(id) },
+        where: { id: validatedId },
         include: {
           subscription: {
             include: { plan: true },
@@ -121,18 +121,18 @@ export class TenantService {
   }
 
   /**
-   * Create a new tenant
+   * Create a new tenant.
+   * 1. Validates input with Zod.
+   * 2. Creates the tenant record + optional subscription in a transaction.
+   * 3. Provisions a dedicated PostgreSQL database for the tenant.
+   * 4. Updates databaseStatus to ACTIVE on success.
    */
   async create(input: unknown): Promise<Tenant | undefined> {
     try {
       const data = tenantFormSchema.parse(input);
-
-      // Separate relation fields and tenant fields
       const { planId, ...tenantData } = data;
 
-      // Start a transaction to ensure atomic tenant and subscription creation
       const tenant = await this.db.$transaction(async (tx) => {
-        // Create the tenant
         const createdTenant = await tx.tenant.create({
           data: {
             ...tenantData,
@@ -141,7 +141,6 @@ export class TenantService {
           },
         });
 
-        // If planId is provided, create the subscription
         if (planId) {
           const plan = await tx.subscriptionPlan.findUnique({
             where: { id: planId },
@@ -163,6 +162,11 @@ export class TenantService {
                 pricePerYear: plan.yearlyPriceBDT,
                 billingCycle: "monthly",
                 currency: "BDT",
+                // Apply per-tenant overrides from the form (fall back to plan defaults)
+                customStudentLimit: tenantData.customStudentLimit ?? undefined,
+                customTeacherLimit: tenantData.customTeacherLimit ?? undefined,
+                customExamLimit: tenantData.customExamLimit ?? undefined,
+                customStorageLimit: tenantData.customStorageLimit ?? undefined,
               },
             });
           }
@@ -171,11 +175,12 @@ export class TenantService {
         return createdTenant;
       });
 
-      // Provision the database after the tenant record is created
+      // Provision the dedicated PostgreSQL database after the record is committed
       if (tenant) {
         try {
           await provisionTenantDb(tenant.id);
         } catch (provisionError) {
+          // Log but don't throw — the tenant record exists; DB can be re-provisioned manually
           console.error(
             `Failed to provision database for tenant ${tenant.id}:`,
             provisionError,
@@ -190,7 +195,7 @@ export class TenantService {
   }
 
   /**
-   * Update tenant
+   * Update tenant details.
    */
   async update(id: string, input: unknown): Promise<Tenant | undefined> {
     try {
@@ -211,12 +216,93 @@ export class TenantService {
   }
 
   /**
-   * Delete tenant
+   * Delete a tenant.
+   * 1. Drops the tenant's dedicated PostgreSQL database (via deleteTenantDb).
+   * 2. Deletes the tenant record from the master database.
+   *
+   * The DB is dropped first so that if the record deletion fails we can
+   * still retry. If the DB drop fails we abort to avoid orphaned records.
    */
   async delete(id: string): Promise<Tenant | undefined> {
     try {
+      const validatedId = uuidSchema.parse(id);
+
+      // Check whether the tenant has a provisioned database
+      const existing = await this.db.tenant.findUnique({
+        where: { id: validatedId },
+        select: { connectionString: true, databaseStatus: true },
+      });
+
+      // Drop the tenant database if one was provisioned
+      if (existing?.connectionString) {
+        try {
+          await deleteTenantDb(validatedId);
+        } catch (dbError) {
+          console.error(
+            `Failed to drop database for tenant ${validatedId}:`,
+            dbError,
+          );
+          // Re-throw so the caller knows the deletion was incomplete
+          throw dbError;
+        }
+      }
+
+      // Delete the master record
       const tenant = await this.db.tenant.delete({
-        where: { id: uuidSchema.parse(id) },
+        where: { id: validatedId },
+      });
+      return tenant as unknown as Tenant;
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
+  /**
+   * Backup a tenant's database using pg_dump.
+   * Requires pg_dump to be installed on the server.
+   * Returns the file path of the created backup.
+   */
+  async backup(id: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const validatedId = uuidSchema.parse(id);
+
+      const tenant = await this.db.tenant.findUnique({
+        where: { id: validatedId },
+        select: { connectionString: true, name: true },
+      });
+
+      if (!tenant?.connectionString) {
+        return {
+          success: false,
+          message: "Tenant has no provisioned database to back up.",
+        };
+      }
+
+      await backupTenantDb(validatedId);
+
+      return {
+        success: true,
+        message: `Backup for tenant "${tenant.name}" completed successfully.`,
+      };
+    } catch (error) {
+      handlePrismaError(error);
+      // handlePrismaError always throws, but TS needs a return
+      return { success: false, message: "Backup failed." };
+    }
+  }
+
+  /**
+   * Re-provision (repair) a tenant's database.
+   * Useful when databaseStatus is PENDING or INACTIVE and needs to be restored.
+   */
+  async reprovision(id: string): Promise<Tenant | undefined> {
+    try {
+      const validatedId = uuidSchema.parse(id);
+
+      await provisionTenantDb(validatedId);
+
+      const tenant = await this.db.tenant.findUnique({
+        where: { id: validatedId },
       });
       return tenant as unknown as Tenant;
     } catch (error) {
@@ -278,11 +364,32 @@ export class TenantService {
   }
 
   /**
-   * Bulk delete tenants
+   * Bulk delete tenants.
+   * Drops each tenant's database before removing the master record.
+   * Failures on individual DB drops are logged but do not abort the others.
    */
   async bulkDelete(ids: string[]): Promise<void> {
     try {
       const validatedIds = z.array(uuidSchema).parse(ids);
+
+      // Fetch which tenants actually have provisioned databases
+      const tenants = await this.db.tenant.findMany({
+        where: { id: { in: validatedIds }, connectionString: { not: null } },
+        select: { id: true },
+      });
+
+      // Drop each tenant database (best-effort, log failures)
+      await Promise.allSettled(
+        tenants.map(async (t) => {
+          try {
+            await deleteTenantDb(t.id);
+          } catch (err) {
+            console.error(`Failed to drop DB for tenant ${t.id}:`, err);
+          }
+        }),
+      );
+
+      // Delete all master records regardless of individual DB drop results
       await this.db.tenant.deleteMany({
         where: { id: { in: validatedIds } },
       });
@@ -301,20 +408,20 @@ export class TenantService {
         inactive: number;
         suspended: number;
         byType: Record<string, number>;
+        byDatabaseStatus: Record<string, number>;
       }
     | undefined
   > {
     try {
-      const [total, active, inactive, suspended, byType] = await Promise.all([
-        this.db.tenant.count(),
-        this.db.tenant.count({ where: { isActive: true } }),
-        this.db.tenant.count({ where: { isActive: false } }),
-        this.db.tenant.count({ where: { isSuspended: true } }),
-        this.db.tenant.groupBy({
-          by: ["type"],
-          _count: true,
-        }),
-      ]);
+      const [total, active, inactive, suspended, byType, byDatabaseStatus] =
+        await Promise.all([
+          this.db.tenant.count(),
+          this.db.tenant.count({ where: { isActive: true } }),
+          this.db.tenant.count({ where: { isActive: false } }),
+          this.db.tenant.count({ where: { isSuspended: true } }),
+          this.db.tenant.groupBy({ by: ["type"], _count: true }),
+          this.db.tenant.groupBy({ by: ["databaseStatus"], _count: true }),
+        ]);
 
       return {
         total,
@@ -322,9 +429,13 @@ export class TenantService {
         inactive,
         suspended,
         byType: byType.reduce(
+          (acc, item) => ({ ...acc, [item.type]: item._count }),
+          {} as Record<string, number>,
+        ),
+        byDatabaseStatus: byDatabaseStatus.reduce(
           (acc, item) => ({
             ...acc,
-            [item.type]: item._count,
+            [item.databaseStatus]: item._count,
           }),
           {} as Record<string, number>,
         ),
