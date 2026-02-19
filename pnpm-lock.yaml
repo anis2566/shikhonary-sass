@@ -202,6 +202,9 @@ importers:
       '@workspace/api':
         specifier: workspace:*
         version: link:../api
+      '@workspace/db':
+        specifier: workspace:*
+        version: link:../db
       '@workspace/ui':
         specifier: workspace:*
         version: link:../ui

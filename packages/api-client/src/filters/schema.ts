@@ -165,4 +165,16 @@ export const tenantFilterSchema = {
  */
 export const subscriptionPlanFilterSchema = {
   ...baseFilterSchema,
+  isActive: parseAsStringEnum(ACTIVE_STATUS).withOptions({
+    clearOnDefault: true,
+  }),
+};
+
+/**
+ * Subscription Filters
+ */
+export const subscriptionFilterSchema = {
+  ...baseFilterSchema,
+  status: parseAsString.withOptions({ clearOnDefault: true }),
+  tier: parseAsString.withOptions({ clearOnDefault: true }),
 };

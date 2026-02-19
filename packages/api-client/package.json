@@ -41,6 +41,7 @@
     "@trpc/server": "^11.0.0-rc.666",
     "@trpc/tanstack-react-query": "^11.10.0",
     "@workspace/api": "workspace:*",
+    "@workspace/db": "workspace:*",
     "@workspace/ui": "workspace:*",
     "@workspace/utils": "workspace:*",
     "next": "16.1.6",

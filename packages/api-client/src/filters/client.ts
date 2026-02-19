@@ -12,6 +12,7 @@ import {
   batchFilterSchema,
   tenantFilterSchema,
   subscriptionPlanFilterSchema,
+  subscriptionFilterSchema,
 } from "./schema";
 
 export const useAcademicClassFilters = () =>
@@ -30,3 +31,5 @@ export const useBatchFilters = () => useQueryStates(batchFilterSchema);
 export const useTenantFilters = () => useQueryStates(tenantFilterSchema);
 export const useSubscriptionPlanFilters = () =>
   useQueryStates(subscriptionPlanFilterSchema);
+export const useSubscriptionFilters = () =>
+  useQueryStates(subscriptionFilterSchema);

@@ -24,6 +24,8 @@ export * from "./services/academic-subtopic.service";
 export * from "./services/mcq.service";
 export * from "./services/student.service";
 export * from "./services/batch.service";
+export * from "./services/subscription-plan.service";
+export * from "./services/subscription.service";
 export {
   AcademicTreeService,
   type AcademicTreeSummary,

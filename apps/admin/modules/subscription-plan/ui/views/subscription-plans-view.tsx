@@ -1,13 +1,15 @@
 "use client";
 
-import { useDeleteModal } from "@/hooks/use-delete";
-import { Filter } from "../components/fiter";
+import { useDeleteModal } from "@workspace/ui/hooks/use-delete";
+import { Layers } from "lucide-react";
+
+import { Filter } from "../components/filter";
 import { SubscriptionPlanList } from "../components/subscription-plan-list";
 import {
   useActivateSubscriptionPlan,
   useDeactivateSubscriptionPlan,
   useDeleteSubscriptionPlan,
-} from "@/trpc/api/use-subscription-plan";
+} from "@workspace/api-client";
 
 export const SubscriptionPlansView = () => {
   const { openDeleteModal } = useDeleteModal();
@@ -35,7 +37,7 @@ export const SubscriptionPlansView = () => {
       entityId: planId,
       entityType: "subscriptionPlan",
       entityName: subscriptionPlanName,
-      onConfirm: (id) => {
+      onConfirm: (id: string) => {
         deleteSubscriptionPlan({ id });
       },
     });
@@ -44,14 +46,38 @@ export const SubscriptionPlansView = () => {
   const isLoading = isActivating || isDeactivating || isDeleting;
 
   return (
-    <div className="p-4 lg:p-6 space-y-6">
-      <Filter isLoading={isLoading} />
-      <SubscriptionPlanList
-        onActive={onActive}
-        handleDelete={handleDeleteSubscriptionPlan}
-        onDeactivate={onDeactivate}
-        isLoading={isLoading}
-      />
+    <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-8 animate-in fade-in duration-700 text-foreground">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2 border-b border-border/30">
+        <div className="flex items-center gap-5">
+          <div className="size-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-soft transition-transform hover:rotate-3">
+            <Layers className="size-7 stroke-[2.5]" />
+          </div>
+          <div>
+            <h1 className="text-4xl font-black tracking-tighter">
+              Subscription Tiers
+            </h1>
+            <p className="text-muted-foreground font-medium">
+              Manage billing plans and service levels for organizations
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-8">
+        {/* Filter Section - Standardized background */}
+        <div className="p-4 bg-muted/20 rounded-[1.5rem] border border-border/30 backdrop-blur-sm">
+          <Filter isLoading={isLoading} />
+        </div>
+
+        {/* Subscription Plan List */}
+        <SubscriptionPlanList
+          onActive={onActive}
+          handleDelete={handleDeleteSubscriptionPlan}
+          onDeactivate={onDeactivate}
+          isLoading={isLoading}
+        />
+      </div>
     </div>
   );
 };

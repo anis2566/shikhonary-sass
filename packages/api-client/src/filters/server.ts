@@ -10,6 +10,7 @@ import {
   batchFilterSchema,
   tenantFilterSchema,
   subscriptionPlanFilterSchema,
+  subscriptionFilterSchema,
 } from "./schema";
 
 export const academicClassLoader = createLoader(academicClassFilterSchema);
@@ -26,3 +27,4 @@ export const tenantLoader = createLoader(tenantFilterSchema);
 export const subscriptionPlanLoader = createLoader(
   subscriptionPlanFilterSchema,
 );
+export const subscriptionLoader = createLoader(subscriptionFilterSchema);

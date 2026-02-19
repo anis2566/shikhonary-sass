@@ -10,7 +10,7 @@ import { nameSchema } from "./shared/fields";
 export const subscriptionPlanFormSchema = z.object({
   name: z.nativeEnum(TENANT_SUBSCRIPTION_PLAN),
   displayName: nameSchema,
-  description: z.string().max(500).optional().nullable(),
+  description: z.string().max(500).optional(),
 
   // Pricing (in cents/paisa)
   monthlyPriceBDT: z.coerce.number().int().min(0, "Price cannot be negative"),
@@ -33,9 +33,9 @@ export const subscriptionPlanFormSchema = z.object({
     .min(1, "Limit must be at least 1"), // in GB
   defaultExamLimit: z.coerce.number().int().min(1, "Limit must be at least 1"),
 
-  features: z.record(z.boolean()).default({}),
-  isActive: z.boolean().default(true),
-  isPopular: z.boolean().default(false),
+  features: z.record(z.boolean()),
+  isActive: z.boolean(),
+  isPopular: z.boolean(),
 });
 
 export type SubscriptionPlanFormValues = z.infer<

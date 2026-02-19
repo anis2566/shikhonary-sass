@@ -21,6 +21,7 @@ import {
   Layers,
   CreditCard,
   Sparkles,
+  PlusCircle,
 } from "lucide-react";
 
 import { Button } from "@workspace/ui/components/button";
@@ -61,12 +62,20 @@ const tenantsGroup: NavGroup = {
   title: "Tenants",
   icon: Building2,
   items: [
-    { title: "All Tenants", url: "/tenants", icon: Building2 },
+    { title: "Add Tenant", url: "/tenants/new", icon: PlusCircle },
+    { title: "Organizations", url: "/tenants", icon: Building2 },
+  ],
+};
+
+const billingGroup: NavGroup = {
+  title: "Billing & Plans",
+  icon: CreditCard,
+  items: [
     { title: "Subscriptions", url: "/subscriptions", icon: Sparkles },
     {
-      title: "Subscription Plans",
+      title: "Pricing Plans",
       url: "/subscription-plans",
-      icon: CreditCard,
+      icon: Layers,
     },
   ],
 };
@@ -111,6 +120,7 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
   const user = { email: "user@example.com" }; // Placeholder
 
   const [tenantsOpen, setTenantsOpen] = useState(true);
+  const [billingOpen, setBillingOpen] = useState(true);
   const [academicOpen, setAcademicOpen] = useState(true);
   const [questionBankOpen, setQuestionBankOpen] = useState(true);
 
@@ -118,11 +128,38 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
     router.push("/auth");
   };
 
+  // Collect all sidebar URLs to determine the best match for highlighting
+  const allSidebarUrls = [
+    ...navItems.map((i) => i.url),
+    ...tenantsGroup.items.map((i) => i.url),
+    ...billingGroup.items.map((i) => i.url),
+    ...academicGroup.items.map((i) => i.url),
+    ...questionBankGroup.items.map((i) => i.url),
+    ...bottomItems.map((i) => i.url),
+  ];
+
   const isActive = (url: string) => {
-    if (url === "/admin") {
-      return pathname === "/admin";
+    if (url === "/") {
+      return pathname === "/" || pathname === "/admin";
     }
-    return pathname === url || pathname.startsWith(`${url}/`);
+
+    // Exact match is always active
+    if (pathname === url) return true;
+
+    // Check if current path is a sub-path of this item
+    const isSubPath = pathname.startsWith(`${url}/`);
+    if (!isSubPath) return false;
+
+    // To avoid "Organizations" highlighting when "Add Tenant" (/tenants/new) is selected,
+    // we only mark the parent as active if no other sidebar item provides a more specific match.
+    const hasMoreSpecificMatch = allSidebarUrls.some(
+      (otherUrl) =>
+        otherUrl !== url &&
+        pathname.startsWith(otherUrl) &&
+        otherUrl.length > url.length,
+    );
+
+    return !hasMoreSpecificMatch;
   };
 
   const isGroupActive = (group: NavGroup) =>
@@ -246,6 +283,7 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
           </div>
           <div className="space-y-1">
             {renderNavGroup(tenantsGroup, tenantsOpen, setTenantsOpen)}
+            {renderNavGroup(billingGroup, billingOpen, setBillingOpen)}
           </div>
         </div>
 

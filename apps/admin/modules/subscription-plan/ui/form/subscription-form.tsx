@@ -1,9 +1,25 @@
 "use client";
 
-import { Save, Loader2, CreditCard, Sparkles, Zap } from "lucide-react";
+import {
+  ChevronLeft,
+  CreditCard,
+  Loader2,
+  Save,
+  Sparkles,
+  Zap,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { Form, useForm, zodResolver } from "@workspace/ui/components/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  useForm,
+  zodResolver,
+} from "@workspace/ui/components/form";
 import {
   Card,
   CardContent,
@@ -11,18 +27,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormDescription,
-} from "@workspace/ui/components/form";
 import { Input } from "@workspace/ui/components/input";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { Switch } from "@workspace/ui/components/switch";
 import { Button } from "@workspace/ui/components/button";
+import { Badge } from "@workspace/ui/components/badge";
 import {
   Select,
   SelectContent,
@@ -35,9 +44,9 @@ import {
   SubscriptionPlanFormValues,
   defaultSubscriptionPlanValues,
 } from "@workspace/schema";
-import { TENANT_SUBSCRIPTION_PLAN } from "@workspace/utils/constant";
+import { TENANT_SUBSCRIPTION_PLAN } from "@workspace/utils";
 
-import { useCreateSubscriptionPlan } from "@/trpc/api/use-subscription-plan";
+import { useCreateSubscriptionPlan } from "@workspace/api-client";
 
 export function SubscriptionForm() {
   const router = useRouter();
@@ -49,103 +58,133 @@ export function SubscriptionForm() {
   });
 
   const onSubmit = async (data: SubscriptionPlanFormValues) => {
-    await createPlan(data)
-      .then(() => {
-        form.reset();
-        router.push("/subscription-plans");
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+    try {
+      await createPlan(data);
+      router.push("/subscription-plans");
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto p-4 lg:p-6">
+    <div className="max-w-4xl mx-auto p-4 lg:p-6 space-y-8 animate-in fade-in duration-500 text-foreground">
+      {/* Header Section */}
+      <div className="flex flex-col gap-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.back()}
+          className="w-fit -ml-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
+        >
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          Back
+        </Button>
+
+        <div className="flex items-center gap-4">
+          <div className="size-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-soft">
+            <CreditCard className="size-6 stroke-[2.5]" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-black tracking-tight text-foreground">
+              Create Subscription Plan
+            </h1>
+            <p className="text-muted-foreground font-medium">
+              Define a new billing tier for your multi-tenant platform
+            </p>
+          </div>
+        </div>
+      </div>
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {/* Basic Info */}
-          <Card className="overflow-hidden border-none shadow-md bg-gradient-to-br from-card to-muted/20">
-            <CardHeader className="border-b bg-muted/30 pb-4">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <CreditCard className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle>Basic Information</CardTitle>
-                  <CardDescription>
-                    Define the plan identity and core details
-                  </CardDescription>
-                </div>
-              </div>
+          <Card className="bg-card/30 backdrop-blur-xl border-border/50 rounded-[2rem] overflow-hidden shadow-medium relative">
+            <div className="absolute top-0 right-0 p-8 opacity-5">
+              <Sparkles className="size-24 text-primary" />
+            </div>
+
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xl font-bold">Plan Details</CardTitle>
+              <CardDescription className="text-muted-foreground font-medium">
+                Identity and core characteristics of the subscription plan
+              </CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Plan Identifier</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      disabled={isPending}
-                    >
+            <CardContent className="pt-6 space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                        Plan Identifier
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-12 bg-background/50 border-border/50 rounded-xl px-4 focus:ring-primary/20 transition-all shadow-soft font-semibold w-full">
+                            <SelectValue placeholder="Select plan level" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="rounded-xl border-border/50 shadow-medium backdrop-blur-xl bg-background/95">
+                          {Object.values(TENANT_SUBSCRIPTION_PLAN).map(
+                            (plan) => (
+                              <SelectItem
+                                key={plan}
+                                value={plan}
+                                className="rounded-lg font-medium"
+                              >
+                                {plan}
+                              </SelectItem>
+                            ),
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="font-bold text-xs" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="displayName"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                        Display Name
+                      </FormLabel>
                       <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select plan level" />
-                        </SelectTrigger>
+                        <Input
+                          placeholder="e.g., Professional Plan"
+                          {...field}
+                          disabled={isPending}
+                          className="h-12 bg-background/50 border-border/50 rounded-xl px-4 focus:ring-primary/20 transition-all shadow-soft font-semibold"
+                        />
                       </FormControl>
-                      <SelectContent>
-                        {Object.values(TENANT_SUBSCRIPTION_PLAN).map((plan) => (
-                          <SelectItem key={plan} value={plan}>
-                            {plan}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Unique identifier for system logic
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="displayName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Display Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., Professional Plan"
-                        {...field}
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      The name visible to your customers
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage className="font-bold text-xs" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <FormField
                 control={form.control}
                 name="description"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Short Description</FormLabel>
+                  <FormItem className="space-y-2">
+                    <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                      Description
+                    </FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Highlight the main value of this plan..."
-                        className="resize-none"
+                        className="min-h-[100px] bg-background/50 border-border/50 rounded-xl p-4 focus:ring-primary/20 transition-all shadow-soft font-medium resize-none"
                         {...field}
-                        value={field.value || ""}
                         disabled={isPending}
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="font-bold text-xs" />
                   </FormItem>
                 )}
               />
@@ -153,29 +192,35 @@ export function SubscriptionForm() {
           </Card>
 
           {/* Pricing Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="border-none shadow-md overflow-hidden">
-              <CardHeader className="bg-primary/5 border-b">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <span className="text-lg">৳</span> BDT Pricing
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Card className="bg-card/30 backdrop-blur-xl border-border/50 rounded-[2rem] overflow-hidden shadow-medium">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xl font-bold flex items-center gap-2">
+                  <div className="size-8 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-600">
+                    <span className="font-black">৳</span>
+                  </div>
+                  BDT Pricing
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-4 pt-6">
+              <CardContent className="pt-6 grid grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="monthlyPriceBDT"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Monthly (৳)</FormLabel>
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                        Monthly
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
                           min="0"
                           {...field}
                           disabled={isPending}
+                          className="h-11 bg-background/50 border-border/50 rounded-xl px-4 focus:ring-primary/20 transition-all shadow-soft font-bold"
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="font-bold text-[10px]" />
                     </FormItem>
                   )}
                 />
@@ -183,45 +228,54 @@ export function SubscriptionForm() {
                   control={form.control}
                   name="yearlyPriceBDT"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Yearly (৳)</FormLabel>
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                        Yearly
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
                           min="0"
                           {...field}
                           disabled={isPending}
+                          className="h-11 bg-background/50 border-border/50 rounded-xl px-4 focus:ring-primary/20 transition-all shadow-soft font-bold"
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="font-bold text-[10px]" />
                     </FormItem>
                   )}
                 />
               </CardContent>
             </Card>
 
-            <Card className="border-none shadow-md overflow-hidden">
-              <CardHeader className="bg-primary/5 border-b">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <span className="text-lg">$</span> USD Pricing
+            <Card className="bg-card/30 backdrop-blur-xl border-border/50 rounded-[2rem] overflow-hidden shadow-medium">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xl font-bold flex items-center gap-2">
+                  <div className="size-8 bg-green-500/10 rounded-lg flex items-center justify-center text-green-600">
+                    <span className="font-black">$</span>
+                  </div>
+                  USD Pricing
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-4 pt-6">
+              <CardContent className="pt-6 grid grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="monthlyPriceUSD"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Monthly ($)</FormLabel>
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                        Monthly
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
                           min="0"
                           {...field}
                           disabled={isPending}
+                          className="h-11 bg-background/50 border-border/50 rounded-xl px-4 focus:ring-primary/20 transition-all shadow-soft font-bold"
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="font-bold text-[10px]" />
                     </FormItem>
                   )}
                 />
@@ -229,17 +283,20 @@ export function SubscriptionForm() {
                   control={form.control}
                   name="yearlyPriceUSD"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Yearly ($)</FormLabel>
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                        Yearly
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
                           min="0"
                           {...field}
                           disabled={isPending}
+                          className="h-11 bg-background/50 border-border/50 rounded-xl px-4 focus:ring-primary/20 transition-all shadow-soft font-bold"
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="font-bold text-[10px]" />
                     </FormItem>
                   )}
                 />
@@ -248,102 +305,79 @@ export function SubscriptionForm() {
           </div>
 
           {/* Resource Limits */}
-          <Card className="overflow-hidden border-none shadow-md">
-            <CardHeader className="border-b bg-muted/30">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-orange-500/10 rounded-lg">
-                  <Zap className="h-5 w-5 text-orange-500" />
+          <Card className="bg-card/30 backdrop-blur-xl border-border/50 rounded-[2rem] overflow-hidden shadow-medium">
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-orange-500/10 rounded-2xl text-orange-600 shadow-soft">
+                  <Zap className="h-5 w-5 stroke-[2.5]" />
                 </div>
-                <CardTitle>Resource Quotas</CardTitle>
+                <div>
+                  <CardTitle className="text-xl font-bold">
+                    Resource Quotas
+                  </CardTitle>
+                  <CardDescription className="text-muted-foreground font-medium">
+                    Scaling limits for organizations on this plan
+                  </CardDescription>
+                </div>
               </div>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-6">
-              <FormField
-                control={form.control}
-                name="studentLimit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Students</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="1"
-                        {...field}
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="teacherLimit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Teachers</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="1"
-                        {...field}
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="storageLimit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Storage (MB)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="1"
-                        {...field}
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="examLimit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Exams</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="1"
-                        {...field}
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <CardContent className="pt-6 grid grid-cols-2 lg:grid-cols-4 gap-6">
+              {(
+                [
+                  { name: "defaultStudentLimit", label: "Students" },
+                  { name: "defaultTeacherLimit", label: "Teachers" },
+                  { name: "defaultStorageLimit", label: "Storage (MB)" },
+                  { name: "defaultExamLimit", label: "Exams" },
+                ] as const
+              ).map((limit) => (
+                <FormField
+                  key={limit.name}
+                  control={form.control}
+                  name={limit.name}
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                        {limit.label}
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          {...field}
+                          value={(field.value as number) || ""}
+                          onChange={(e) =>
+                            field.onChange(e.target.valueAsNumber || 0)
+                          }
+                          disabled={isPending}
+                          className="h-11 bg-background/50 border-border/50 rounded-xl px-4 focus:ring-primary/20 transition-all shadow-soft font-bold"
+                        />
+                      </FormControl>
+                      <FormMessage className="font-bold text-[10px]" />
+                    </FormItem>
+                  )}
+                />
+              ))}
             </CardContent>
           </Card>
 
           {/* Features Toggle */}
-          <Card className="overflow-hidden border-none shadow-md">
-            <CardHeader className="border-b bg-muted/30">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-purple-500/10 rounded-lg">
-                  <Sparkles className="h-5 w-5 text-purple-500" />
+          <Card className="bg-card/30 backdrop-blur-xl border-border/50 rounded-[2rem] overflow-hidden shadow-medium">
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-purple-500/10 rounded-2xl text-purple-600 shadow-soft">
+                  <Sparkles className="h-5 w-5 stroke-[2.5]" />
                 </div>
-                <CardTitle>Feature Entitlements</CardTitle>
+                <div>
+                  <CardTitle className="text-xl font-bold">
+                    Feature Entitlements
+                  </CardTitle>
+                  <CardDescription className="text-muted-foreground font-medium">
+                    Manage feature availability for this plan
+                  </CardDescription>
+                </div>
               </div>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-6">
+            <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
                 { key: "smsNotifications", label: "SMS Notifications" },
                 { key: "parentPortal", label: "Parent Portal" },
@@ -357,8 +391,8 @@ export function SubscriptionForm() {
                   control={form.control}
                   name={`features.${key}`}
                   render={({ field }) => (
-                    <FormItem className="flex items-center justify-between rounded-xl border bg-card p-4 transition-all hover:border-primary/50">
-                      <FormLabel className="font-medium cursor-pointer">
+                    <FormItem className="flex items-center justify-between rounded-xl border border-border/50 bg-background/30 p-4 transition-all hover:bg-background/50 hover:border-primary/30 group shadow-soft">
+                      <FormLabel className="font-bold text-sm cursor-pointer group-hover:text-primary transition-colors">
                         {label}
                       </FormLabel>
                       <FormControl>
@@ -366,6 +400,7 @@ export function SubscriptionForm() {
                           checked={!!field.value}
                           onCheckedChange={field.onChange}
                           disabled={isPending}
+                          className="data-[state=checked]:bg-primary"
                         />
                       </FormControl>
                     </FormItem>
@@ -375,90 +410,91 @@ export function SubscriptionForm() {
             </CardContent>
           </Card>
 
-          {/* Status */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="border-none shadow-md">
-              <CardContent className="pt-6">
-                <FormField
-                  control={form.control}
-                  name="isActive"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-muted/10">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">
-                          Active Status
-                        </FormLabel>
-                        <CardDescription>
-                          Plan visibility for new users
-                        </CardDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          disabled={isPending}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
+          {/* Status Switches */}
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="isActive"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-[1.5rem] border border-border/50 bg-primary/5 p-6 shadow-soft transition-all hover:bg-primary/[0.07]">
+                  <div className="space-y-1">
+                    <FormLabel className="text-lg font-bold text-foreground flex items-center gap-2">
+                      Active Status
+                      {field.value && (
+                        <Badge className="bg-primary text-primary-foreground font-black text-[10px] uppercase">
+                          Live
+                        </Badge>
+                      )}
+                    </FormLabel>
+                    <CardDescription className="text-muted-foreground font-medium">
+                      Control overall plan availability
+                    </CardDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isPending}
+                      className="data-[state=checked]:bg-primary"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
-            <Card className="border-none shadow-md">
-              <CardContent className="pt-6">
-                <FormField
-                  control={form.control}
-                  name="isPopular"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-primary/5 border-primary/20">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base font-semibold">
-                          Recommended
-                        </FormLabel>
-                        <CardDescription>Highlight this plan</CardDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          disabled={isPending}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
+            <FormField
+              control={form.control}
+              name="isPopular"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-[1.5rem] border border-primary/20 bg-primary/10 p-6 shadow-soft transition-all hover:bg-primary/15">
+                  <div className="space-y-1">
+                    <FormLabel className="text-lg font-bold text-primary flex items-center gap-2">
+                      Popular / Recommended
+                      {field.value && (
+                        <Badge className="bg-orange-500 text-white font-black text-[10px] uppercase">
+                          Featured
+                        </Badge>
+                      )}
+                    </FormLabel>
+                    <CardDescription className="text-primary/70 font-medium">
+                      Highlight this plan in the pricing tables
+                    </CardDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isPending}
+                      className="data-[state=checked]:bg-primary"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
           </div>
 
-          <div className="flex items-center justify-end gap-4 pt-4 border-t">
+          {/* Form Actions */}
+          <div className="flex items-center justify-end gap-3 pt-6 border-t border-border/30">
             <Button
               type="button"
               variant="outline"
-              size="lg"
               disabled={isPending}
               onClick={() => router.back()}
+              className="h-12 px-6 rounded-xl font-bold border-border/50 hover:bg-muted transition-all"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              size="lg"
               disabled={isPending}
-              className="min-w-[160px] shadow-lg shadow-primary/20"
+              className="h-12 px-8 bg-primary text-primary-foreground rounded-xl shadow-glow font-bold hover:scale-[1.02] active:scale-[0.98] transition-all min-w-[170px]"
             >
               {isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
-                </>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin stroke-[3]" />
               ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Create Plan
-                </>
+                <Save className="mr-2 h-4 w-4 stroke-[3]" />
               )}
+              {isPending ? "Creating..." : "Create Plan"}
             </Button>
           </div>
         </form>
