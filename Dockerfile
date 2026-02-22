@@ -52,6 +52,9 @@ ENV NODE_ENV=production
 # We use the filter to target the db package specifically
 RUN pnpm --filter=@workspace/db run db:generate:all
 
+# Ensure the public directory exists to prevent build/copy failures if it's empty/missing
+RUN mkdir -p apps/admin/public
+
 # 2. Build the admin application
 RUN pnpm turbo build --filter=admin
 
