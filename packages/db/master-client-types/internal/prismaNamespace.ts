@@ -397,6 +397,7 @@ export const ModelName = {
   Invoice: 'Invoice',
   AcademicClass: 'AcademicClass',
   AcademicSubject: 'AcademicSubject',
+  AcademicClassSubject: 'AcademicClassSubject',
   AcademicChapter: 'AcademicChapter',
   AcademicTopic: 'AcademicTopic',
   AcademicSubTopic: 'AcademicSubTopic',
@@ -420,7 +421,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "account" | "verification" | "tenant" | "tenantMember" | "tenantInvitation" | "subscriptionPlan" | "subscription" | "subscriptionHistory" | "invoice" | "academicClass" | "academicSubject" | "academicChapter" | "academicTopic" | "academicSubTopic" | "mcq" | "cq" | "auditLog" | "systemSetting" | "notification"
+    modelProps: "user" | "session" | "account" | "verification" | "tenant" | "tenantMember" | "tenantInvitation" | "subscriptionPlan" | "subscription" | "subscriptionHistory" | "invoice" | "academicClass" | "academicSubject" | "academicClassSubject" | "academicChapter" | "academicTopic" | "academicSubTopic" | "mcq" | "cq" | "auditLog" | "systemSetting" | "notification"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1386,6 +1387,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    AcademicClassSubject: {
+      payload: Prisma.$AcademicClassSubjectPayload<ExtArgs>
+      fields: Prisma.AcademicClassSubjectFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AcademicClassSubjectFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AcademicClassSubjectPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AcademicClassSubjectFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AcademicClassSubjectPayload>
+        }
+        findFirst: {
+          args: Prisma.AcademicClassSubjectFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AcademicClassSubjectPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AcademicClassSubjectFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AcademicClassSubjectPayload>
+        }
+        findMany: {
+          args: Prisma.AcademicClassSubjectFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AcademicClassSubjectPayload>[]
+        }
+        create: {
+          args: Prisma.AcademicClassSubjectCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AcademicClassSubjectPayload>
+        }
+        createMany: {
+          args: Prisma.AcademicClassSubjectCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AcademicClassSubjectCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AcademicClassSubjectPayload>[]
+        }
+        delete: {
+          args: Prisma.AcademicClassSubjectDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AcademicClassSubjectPayload>
+        }
+        update: {
+          args: Prisma.AcademicClassSubjectUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AcademicClassSubjectPayload>
+        }
+        deleteMany: {
+          args: Prisma.AcademicClassSubjectDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AcademicClassSubjectUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AcademicClassSubjectUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AcademicClassSubjectPayload>[]
+        }
+        upsert: {
+          args: Prisma.AcademicClassSubjectUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AcademicClassSubjectPayload>
+        }
+        aggregate: {
+          args: Prisma.AcademicClassSubjectAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAcademicClassSubject>
+        }
+        groupBy: {
+          args: Prisma.AcademicClassSubjectGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AcademicClassSubjectGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AcademicClassSubjectCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AcademicClassSubjectCountAggregateOutputType> | number
+        }
+      }
+    }
     AcademicChapter: {
       payload: Prisma.$AcademicChapterPayload<ExtArgs>
       fields: Prisma.AcademicChapterFieldRefs
@@ -2267,12 +2342,22 @@ export const AcademicSubjectScalarFieldEnum = {
   group: 'group',
   position: 'position',
   isActive: 'isActive',
-  classId: 'classId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type AcademicSubjectScalarFieldEnum = (typeof AcademicSubjectScalarFieldEnum)[keyof typeof AcademicSubjectScalarFieldEnum]
+
+
+export const AcademicClassSubjectScalarFieldEnum = {
+  id: 'id',
+  classId: 'classId',
+  subjectId: 'subjectId',
+  position: 'position',
+  createdAt: 'createdAt'
+} as const
+
+export type AcademicClassSubjectScalarFieldEnum = (typeof AcademicClassSubjectScalarFieldEnum)[keyof typeof AcademicClassSubjectScalarFieldEnum]
 
 
 export const AcademicChapterScalarFieldEnum = {
@@ -2650,6 +2735,7 @@ export type GlobalOmitConfig = {
   invoice?: Prisma.InvoiceOmit
   academicClass?: Prisma.AcademicClassOmit
   academicSubject?: Prisma.AcademicSubjectOmit
+  academicClassSubject?: Prisma.AcademicClassSubjectOmit
   academicChapter?: Prisma.AcademicChapterOmit
   academicTopic?: Prisma.AcademicTopicOmit
   academicSubTopic?: Prisma.AcademicSubTopicOmit

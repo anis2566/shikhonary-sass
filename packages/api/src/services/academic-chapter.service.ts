@@ -24,10 +24,16 @@ export interface ChapterWithRelations extends AcademicChapter {
   subject?: {
     id: string;
     displayName: string;
+    classSubjects?: {
+      academicClass: {
+        id: string;
+        displayName: string;
+      };
+    }[];
     class?: {
       id: string;
       displayName: string;
-    } | null;
+    } | null; // for backward compatibility
   } | null;
   topics?: (AcademicTopic & {
     _count?: {
@@ -102,6 +108,7 @@ export class AcademicChapterService {
     sortOrder?: "asc" | "desc";
     isActive?: boolean;
     subjectId?: string;
+    sort?: string;
   }): Promise<PaginatedResponse<ChapterWithRelations> | undefined> {
     try {
       const where = buildWhere(input);
@@ -117,7 +124,11 @@ export class AcademicChapterService {
           ...pagination,
           include: {
             subject: {
-              include: { class: true },
+              include: {
+                classSubjects: {
+                  include: { academicClass: true },
+                },
+              },
             },
             _count: {
               select: { topics: true, mcqs: true, cqs: true },
@@ -127,7 +138,22 @@ export class AcademicChapterService {
         this.db.academicChapter.count({ where }),
       ]);
 
-      return createPaginatedResponse(items, total, input.page, input.limit);
+      const mappedItems = items.map((item) => ({
+        ...item,
+        subject: item.subject
+          ? {
+              ...item.subject,
+              class: item.subject.classSubjects?.[0]?.academicClass || null,
+            }
+          : null,
+      }));
+
+      return createPaginatedResponse(
+        mappedItems as ChapterWithRelations[],
+        total,
+        input.page,
+        input.limit,
+      );
     } catch (error) {
       handlePrismaError(error);
     }
@@ -136,12 +162,14 @@ export class AcademicChapterService {
   async getById(id: string): Promise<ChapterWithRelations | null | undefined> {
     try {
       const validatedId = uuidSchema.parse(id);
-      return await this.db.academicChapter.findUnique({
+      const item = await this.db.academicChapter.findUnique({
         where: { id: validatedId },
         include: {
           subject: {
             include: {
-              class: true,
+              classSubjects: {
+                include: { academicClass: true },
+              },
             },
           },
           topics: {
@@ -165,12 +193,26 @@ export class AcademicChapterService {
           },
         },
       });
+
+      if (!item) return null;
+
+      return {
+        ...item,
+        subject: item.subject
+          ? {
+              ...item.subject,
+              class: item.subject.classSubjects?.[0]?.academicClass || null,
+            }
+          : null,
+      } as ChapterWithRelations;
     } catch (error) {
       handlePrismaError(error);
     }
   }
 
-  async create(input: AcademicChapter): Promise<AcademicChapter | undefined> {
+  async create(
+    input: z.infer<typeof academicChapterFormSchema>,
+  ): Promise<AcademicChapter | undefined> {
     try {
       const data = academicChapterFormSchema.parse(input);
       if (data.position === undefined) {
@@ -187,7 +229,7 @@ export class AcademicChapterService {
 
   async update(
     id: string,
-    input: AcademicChapter,
+    input: z.infer<typeof updateAcademicChapterSchema>,
   ): Promise<AcademicChapter | undefined> {
     try {
       const validatedId = uuidSchema.parse(id);

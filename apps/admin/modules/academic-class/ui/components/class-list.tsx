@@ -43,12 +43,20 @@ import {
 } from "@workspace/ui/components/dropdown-menu";
 import { Button } from "@workspace/ui/components/button";
 
-import { AcademicClass } from "@workspace/db";
+import { AcademicClass, AcademicSubject } from "@workspace/db";
 import { cn } from "@workspace/ui/lib/utils";
 import { ACADEMIC_LEVEL } from "@workspace/utils/constants";
 
 import { SortableRow } from "./sortable-row";
 import { useAcademicClasses } from "@workspace/api-client";
+
+interface ClassWithRelations extends AcademicClass {
+  subjects?: AcademicSubject[];
+  _count?: {
+    classSubjects: number;
+    subjects?: number;
+  };
+}
 
 export interface Column<T> {
   key: keyof T | string;
@@ -57,7 +65,7 @@ export interface Column<T> {
   render?: (item: T) => React.ReactNode;
 }
 
-const columns: Column<AcademicClass>[] = [
+const columns: Column<ClassWithRelations>[] = [
   {
     key: "displayName",
     header: "Class",
@@ -78,6 +86,34 @@ const columns: Column<AcademicClass>[] = [
     key: "level",
     header: "Level",
     render: (cls) => <LevelBadge level={cls.level as ACADEMIC_LEVEL} />,
+  },
+  {
+    key: "subjects",
+    header: "Subjects",
+    render: (cls) => (
+      <div className="flex flex-wrap gap-1 max-w-[200px]">
+        {cls.subjects && cls.subjects.length > 0 ? (
+          cls.subjects.slice(0, 3).map((sub) => (
+            <Badge
+              key={sub.id}
+              variant="outline"
+              className="bg-primary/5 text-primary border-primary/20 font-bold text-[9px] uppercase tracking-wider rounded-md whitespace-nowrap"
+            >
+              {sub.displayName}
+            </Badge>
+          ))
+        ) : (
+          <span className="text-[10px] text-muted-foreground italic">None</span>
+        )}
+        {cls.subjects && cls.subjects.length > 3 && (
+          <div className="size-5 rounded bg-muted flex items-center justify-center border border-border/50 shadow-soft">
+            <span className="text-[8px] font-bold text-muted-foreground">
+              +{cls.subjects.length - 3}
+            </span>
+          </div>
+        )}
+      </div>
+    ),
   },
   {
     key: "position",
@@ -102,7 +138,7 @@ const columns: Column<AcademicClass>[] = [
 ];
 
 interface ClassListProps {
-  onReorder: (items: AcademicClass[]) => void;
+  onReorder: (items: ClassWithRelations[]) => void;
   disableReorder?: boolean;
   selectedIds: string[];
   setSelectedIds: Dispatch<SetStateAction<string[]>>;
@@ -223,7 +259,7 @@ export function ClassList({
       const newIndex =
         classesData?.items.findIndex((item) => item.id === over.id) ?? 0;
       const newData = arrayMove(
-        classesData?.items ?? [],
+        (classesData?.items as ClassWithRelations[]) ?? [],
         oldIndex,
         newIndex,
       ).map((item, index) => ({

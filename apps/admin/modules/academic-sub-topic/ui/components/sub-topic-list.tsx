@@ -58,8 +58,15 @@ interface AcademicSubTopicWithRelation extends AcademicSubTopic {
       subject: {
         id: string;
         displayName: string;
+        class?: {
+          id: string;
+          displayName: string;
+        } | null;
       };
     };
+  };
+  _count?: {
+    mcqs: number;
   };
 }
 
@@ -130,7 +137,7 @@ const columns: Column<AcademicSubTopicWithRelation>[] = [
 ];
 
 interface SubTopicListProps {
-  onReorder: (items: AcademicSubTopic[]) => void;
+  onReorder: (items: AcademicSubTopicWithRelation[]) => void;
   disableReorder?: boolean;
   selectedIds: string[];
   setSelectedIds: Dispatch<SetStateAction<string[]>>;

@@ -51,6 +51,9 @@ import { useAcademicSubjects } from "@workspace/api-client";
 // matching the structure returned by the useAcademicSubjects hook select function
 interface SubjectWithRelations extends AcademicSubject {
   class?: AcademicClass | null;
+  classSubjects?: {
+    academicClass: AcademicClass;
+  }[];
   _count?: {
     chapters: number;
     mcqs: number;
@@ -84,12 +87,26 @@ const columns: Column<SubjectWithRelations>[] = [
     key: "class",
     header: "Academic Class",
     render: (subject) => (
-      <Badge
-        variant="outline"
-        className="bg-primary/5 text-primary border-primary/20 font-bold text-[10px] uppercase tracking-wider rounded-md"
-      >
-        {subject.class?.displayName || "N/A"}
-      </Badge>
+      <div className="flex flex-wrap gap-1 max-w-[200px]">
+        {subject.classSubjects && subject.classSubjects.length > 0 ? (
+          subject.classSubjects.map((cs) => (
+            <Badge
+              key={cs.academicClass.id}
+              variant="outline"
+              className="bg-primary/5 text-primary border-primary/20 font-bold text-[10px] uppercase tracking-wider rounded-md whitespace-nowrap"
+            >
+              {cs.academicClass.displayName}
+            </Badge>
+          ))
+        ) : (
+          <Badge
+            variant="outline"
+            className="bg-muted text-muted-foreground border-transparent font-bold text-[10px] uppercase tracking-wider rounded-md"
+          >
+            N/A
+          </Badge>
+        )}
+      </div>
     ),
   },
   {

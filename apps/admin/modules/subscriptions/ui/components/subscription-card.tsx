@@ -11,7 +11,6 @@ import {
   AlertCircle,
   XCircle,
   Pause,
-  LucideIcon,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@workspace/ui/components/badge";
@@ -89,10 +88,7 @@ export const SubscriptionCard = ({ subscription }: SubscriptionCardProps) => {
     `${currency} ${amount.toLocaleString()}`;
 
   return (
-    <Link
-      href={`/admin/subscriptions/${subscription.id}`}
-      className="block group"
-    >
+    <Link href={`/subscriptions/${subscription.id}`} className="block group">
       <Card className="bg-card/40 backdrop-blur-md border border-border/50 hover:border-primary/50 hover:shadow-glow transition-all duration-300">
         <CardContent className="p-5">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

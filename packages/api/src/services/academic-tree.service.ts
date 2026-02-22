@@ -27,6 +27,7 @@ export interface AcademicTreeSearchResults {
     id: string;
     name: string;
     displayName: string;
+    classSubjects?: { academicClass: { id: string; displayName: string } }[];
     class: { id: string; displayName: string };
   }[];
   chapters: {
@@ -36,6 +37,7 @@ export interface AcademicTreeSearchResults {
     subject: {
       id: string;
       displayName: string;
+      classSubjects?: { academicClass: { id: string; displayName: string } }[];
       class: { id: string; displayName: string };
     };
   }[];
@@ -49,6 +51,9 @@ export interface AcademicTreeSearchResults {
       subject: {
         id: string;
         displayName: string;
+        classSubjects?: {
+          academicClass: { id: string; displayName: string };
+        }[];
         class: { id: string; displayName: string };
       };
     };
@@ -66,6 +71,9 @@ export interface AcademicTreeSearchResults {
         subject: {
           id: string;
           displayName: string;
+          classSubjects?: {
+            academicClass: { id: string; displayName: string };
+          }[];
           class: { id: string; displayName: string };
         };
       };
@@ -108,17 +116,21 @@ export class AcademicTreeService {
         where: classWhere,
         orderBy: { position: "asc" },
         include: {
-          subjects: {
-            where: subjectId ? { id: subjectId } : {},
+          classSubjects: {
+            where: subjectId ? { subjectId } : {},
             orderBy: { position: "asc" },
             include: {
-              chapters: {
-                orderBy: { position: "asc" },
+              academicSubject: {
                 include: {
-                  topics: {
+                  chapters: {
                     orderBy: { position: "asc" },
                     include: {
-                      subtopics: { orderBy: { position: "asc" } },
+                      topics: {
+                        orderBy: { position: "asc" },
+                        include: {
+                          subtopics: { orderBy: { position: "asc" } },
+                        },
+                      },
                     },
                   },
                 },
@@ -128,15 +140,19 @@ export class AcademicTreeService {
         },
       });
 
+      // Map back to expected structure for internal processing
+      const mappedHierarchy = hierarchy.map((cls) => ({
+        ...cls,
+        subjects: cls.classSubjects.map((cs) => cs.academicSubject),
+      }));
+
       // Compute summary counts from the already-fetched data
-      // Cast to any[] because the dynamic `where` breaks Prisma's include inference
-      const tree = hierarchy as any[];
       let totalSubjects = 0;
       let totalChapters = 0;
       let totalTopics = 0;
       let totalsubtopics = 0;
 
-      for (const cls of tree) {
+      for (const cls of mappedHierarchy) {
         totalSubjects += cls.subjects.length;
         for (const subject of cls.subjects) {
           totalChapters += subject.chapters.length;
@@ -150,7 +166,7 @@ export class AcademicTreeService {
       }
 
       return {
-        hierarchy,
+        hierarchy: mappedHierarchy,
         summary: {
           totalClasses: hierarchy.length,
           totalSubjects,
@@ -217,7 +233,11 @@ export class AcademicTreeService {
               id: true,
               name: true,
               displayName: true,
-              class: { select: { id: true, displayName: true } },
+              classSubjects: {
+                select: {
+                  academicClass: { select: { id: true, displayName: true } },
+                },
+              },
             },
             orderBy: { position: "asc" },
           }),
@@ -231,7 +251,13 @@ export class AcademicTreeService {
                 select: {
                   id: true,
                   displayName: true,
-                  class: { select: { id: true, displayName: true } },
+                  classSubjects: {
+                    select: {
+                      academicClass: {
+                        select: { id: true, displayName: true },
+                      },
+                    },
+                  },
                 },
               },
             },
@@ -251,7 +277,13 @@ export class AcademicTreeService {
                     select: {
                       id: true,
                       displayName: true,
-                      class: { select: { id: true, displayName: true } },
+                      classSubjects: {
+                        select: {
+                          academicClass: {
+                            select: { id: true, displayName: true },
+                          },
+                        },
+                      },
                     },
                   },
                 },
@@ -277,7 +309,13 @@ export class AcademicTreeService {
                         select: {
                           id: true,
                           displayName: true,
-                          class: { select: { id: true, displayName: true } },
+                          classSubjects: {
+                            select: {
+                              academicClass: {
+                                select: { id: true, displayName: true },
+                              },
+                            },
+                          },
                         },
                       },
                     },
@@ -289,12 +327,53 @@ export class AcademicTreeService {
           }),
         ]);
 
+      // Map for breadcrumbs
       const results: AcademicTreeSearchResults = {
         classes,
-        subjects,
-        chapters,
-        topics,
-        subtopics,
+        subjects: subjects.map((s) => ({
+          ...s,
+          class: s.classSubjects?.[0]?.academicClass || {
+            id: "N/A",
+            displayName: "N/A",
+          },
+        })),
+        chapters: chapters.map((c) => ({
+          ...c,
+          subject: {
+            ...c.subject,
+            class: c.subject.classSubjects?.[0]?.academicClass || {
+              id: "N/A",
+              displayName: "N/A",
+            },
+          },
+        })),
+        topics: topics.map((t) => ({
+          ...t,
+          chapter: {
+            ...t.chapter,
+            subject: {
+              ...t.chapter.subject,
+              class: t.chapter.subject.classSubjects?.[0]?.academicClass || {
+                id: "N/A",
+                displayName: "N/A",
+              },
+            },
+          },
+        })),
+        subtopics: subtopics.map((st) => ({
+          ...st,
+          topic: {
+            ...st.topic,
+            chapter: {
+              ...st.topic.chapter,
+              subject: {
+                ...st.topic.chapter.subject,
+                class: st.topic.chapter.subject.classSubjects?.[0]
+                  ?.academicClass || { id: "N/A", displayName: "N/A" },
+              },
+            },
+          },
+        })),
       };
 
       return {

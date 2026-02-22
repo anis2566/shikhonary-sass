@@ -4,6 +4,7 @@ import {
   type AcademicSubject,
   type PrismaClient,
   type AcademicTopic,
+  type AcademicClassSubject,
 } from "@workspace/db";
 import {
   academicClassFormSchema,
@@ -29,8 +30,18 @@ export interface ClassWithRelations extends AcademicClass {
       cqs: number;
     };
   })[];
+  classSubjects?: (AcademicClassSubject & {
+    academicSubject: AcademicSubject & {
+      _count: {
+        chapters: number;
+        mcqs: number;
+        cqs: number;
+      };
+    };
+  })[];
   _count?: {
-    subjects: number;
+    classSubjects: number;
+    subjects?: number; // for backward compatibility
   };
 }
 
@@ -97,6 +108,7 @@ export class AcademicClassService {
     sortOrder?: "asc" | "desc";
     isActive?: boolean;
     level?: string;
+    sort?: string;
   }): Promise<PaginatedResponse<ClassWithRelations> | undefined> {
     try {
       const where = buildWhere(input);
@@ -111,16 +123,36 @@ export class AcademicClassService {
           orderBy: input.sortBy ? orderBy : { position: "asc" },
           ...pagination,
           include: {
+            classSubjects: {
+              include: {
+                academicSubject: {
+                  include: {
+                    _count: {
+                      select: { chapters: true, mcqs: true, cqs: true },
+                    },
+                  },
+                },
+              },
+            },
             _count: {
-              select: { subjects: true },
+              select: { classSubjects: true },
             },
           },
         }),
         this.db.academicClass.count({ where }),
       ]);
 
+      const mappedItems = items.map((item) => ({
+        ...item,
+        subjects: item.classSubjects?.map((cs) => cs.academicSubject) || [],
+        _count: {
+          ...item._count,
+          subjects: item._count.classSubjects,
+        },
+      }));
+
       return createPaginatedResponse(
-        items as ClassWithRelations[],
+        mappedItems as ClassWithRelations[],
         total,
         input.page,
         input.limit,
@@ -133,29 +165,43 @@ export class AcademicClassService {
   async getById(id: string): Promise<ClassWithRelations | null | undefined> {
     try {
       const validatedId = uuidSchema.parse(id);
-      return await this.db.academicClass.findUnique({
+      const item = await this.db.academicClass.findUnique({
         where: { id: validatedId },
         include: {
-          subjects: {
+          classSubjects: {
             orderBy: { position: "asc" },
             include: {
-              _count: {
-                select: {
-                  chapters: true,
-                  mcqs: true,
-                  cqs: true,
+              academicSubject: {
+                include: {
+                  _count: {
+                    select: {
+                      chapters: true,
+                      mcqs: true,
+                      cqs: true,
+                    },
+                  },
                 },
               },
             },
           },
         },
       });
+
+      if (!item) return null;
+
+      // Map classSubjects to subjects for backward compatibility
+      return {
+        ...item,
+        subjects: item.classSubjects.map((cs) => cs.academicSubject),
+      } as ClassWithRelations;
     } catch (error) {
       handlePrismaError(error);
     }
   }
 
-  async create(input: AcademicClass): Promise<AcademicClass | undefined> {
+  async create(
+    input: z.infer<typeof academicClassFormSchema>,
+  ): Promise<AcademicClass | undefined> {
     try {
       const data = academicClassFormSchema.parse(input);
 
@@ -177,7 +223,7 @@ export class AcademicClassService {
 
   async update(
     id: string,
-    input: AcademicClass,
+    input: z.infer<typeof updateAcademicClassSchema>,
   ): Promise<AcademicClass | undefined> {
     try {
       const validatedId = uuidSchema.parse(id);
@@ -295,17 +341,45 @@ export class AcademicClassService {
         mcqCount,
         cqCount,
       ] = await Promise.all([
-        this.db.academicSubject.count({ where: { classId: validatedId } }),
+        this.db.academicSubject.count({
+          where: {
+            classSubjects: { some: { classId: validatedId } },
+          },
+        }),
         this.db.academicChapter.count({
-          where: { subject: { classId: validatedId } },
+          where: {
+            subject: {
+              classSubjects: { some: { classId: validatedId } },
+            },
+          },
         }),
         this.db.academicTopic.count({
-          where: { chapter: { subject: { classId: validatedId } } },
+          where: {
+            chapter: {
+              subject: {
+                classSubjects: { some: { classId: validatedId } },
+              },
+            },
+          },
         }),
         this.db.academicSubTopic.count({
-          where: { topic: { chapter: { subject: { classId: validatedId } } } },
+          where: {
+            topic: {
+              chapter: {
+                subject: {
+                  classSubjects: { some: { classId: validatedId } },
+                },
+              },
+            },
+          },
         }),
-        this.db.mcq.count({ where: { subject: { classId: validatedId } } }),
+        this.db.mcq.count({
+          where: {
+            subject: {
+              classSubjects: { some: { classId: validatedId } },
+            },
+          },
+        }),
         this.db.cq.count({ where: { classId: validatedId } }),
       ]);
 
@@ -335,7 +409,7 @@ export class AcademicClassService {
     try {
       const validatedId = uuidSchema.parse(id);
       const [
-        subjects,
+        subjectsData,
         chapterCount,
         topicCount,
         subTopicCount,
@@ -343,7 +417,9 @@ export class AcademicClassService {
         cqCount,
       ] = await Promise.all([
         this.db.academicSubject.findMany({
-          where: { classId: validatedId },
+          where: {
+            classSubjects: { some: { classId: validatedId } },
+          },
           select: {
             id: true,
             displayName: true,
@@ -356,19 +432,43 @@ export class AcademicClassService {
           orderBy: { position: "asc" },
         }),
         this.db.academicChapter.count({
-          where: { subject: { classId: validatedId } },
+          where: {
+            subject: {
+              classSubjects: { some: { classId: validatedId } },
+            },
+          },
         }),
         this.db.academicTopic.count({
-          where: { chapter: { subject: { classId: validatedId } } },
+          where: {
+            chapter: {
+              subject: {
+                classSubjects: { some: { classId: validatedId } },
+              },
+            },
+          },
         }),
         this.db.academicSubTopic.count({
           where: {
-            topic: { chapter: { subject: { classId: validatedId } } },
+            topic: {
+              chapter: {
+                subject: {
+                  classSubjects: { some: { classId: validatedId } },
+                },
+              },
+            },
           },
         }),
-        this.db.mcq.count({ where: { subject: { classId: validatedId } } }),
+        this.db.mcq.count({
+          where: {
+            subject: {
+              classSubjects: { some: { classId: validatedId } },
+            },
+          },
+        }),
         this.db.cq.count({ where: { classId: validatedId } }),
       ]);
+
+      const subjects = subjectsData;
 
       const totalChapters = subjects.reduce(
         (acc, curr) => acc + curr._count.chapters,
@@ -414,7 +514,7 @@ export class AcademicClassService {
         where: {
           chapter: {
             subject: {
-              classId: validatedClassId,
+              classSubjects: { some: { classId: validatedClassId } },
             },
           },
         },

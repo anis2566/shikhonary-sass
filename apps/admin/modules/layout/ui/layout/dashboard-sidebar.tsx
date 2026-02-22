@@ -279,11 +279,10 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
 
         <div>
           <div className="px-3 mb-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60">
-            {!collapsed ? "Management" : "•••"}
+            {!collapsed ? "Tenants" : "•••"}
           </div>
           <div className="space-y-1">
             {renderNavGroup(tenantsGroup, tenantsOpen, setTenantsOpen)}
-            {renderNavGroup(billingGroup, billingOpen, setBillingOpen)}
           </div>
         </div>
 
@@ -306,6 +305,15 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
               questionBankOpen,
               setQuestionBankOpen,
             )}
+          </div>
+        </div>
+
+        <div>
+          <div className="px-3 mb-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60">
+            {!collapsed ? "Billing" : "•••"}
+          </div>
+          <div className="space-y-1">
+            {renderNavGroup(billingGroup, billingOpen, setBillingOpen)}
           </div>
         </div>
 

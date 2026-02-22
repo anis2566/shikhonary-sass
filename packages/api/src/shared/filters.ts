@@ -56,6 +56,7 @@ export const baseListInputSchema = z.object({
     "asc" | "desc" | null | undefined
   >,
   isActive: zNullishBoolean,
+  sort: zNullishString,
 });
 
 export type FilterInput = z.infer<typeof filterInputSchema>;

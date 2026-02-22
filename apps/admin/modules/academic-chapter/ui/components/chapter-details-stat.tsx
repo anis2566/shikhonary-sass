@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Hash, HelpCircle, Layers, Target } from "lucide-react";
+import { BookOpen, HelpCircle, Layers, Target } from "lucide-react";
 
 import { ChapterDetailsStatCard } from "./chapter-details-stat-card";
 
@@ -15,7 +15,7 @@ export const ChapterDetailsStat = ({ chapterId }: ChapterDetailsStatProps) => {
   const stats = statsData?.stats;
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 p-1">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-1">
       <ChapterDetailsStatCard
         icon={Layers}
         label="Syllabus Topics"
@@ -39,12 +39,6 @@ export const ChapterDetailsStat = ({ chapterId }: ChapterDetailsStatProps) => {
         label="CQ Assets"
         value={stats?.overview?.totalCqs || 0}
         color="primary"
-      />
-      <ChapterDetailsStatCard
-        icon={Hash}
-        label="Sort Position"
-        value={`#${stats?.overview?.position || 0}`}
-        color="green"
       />
     </div>
   );

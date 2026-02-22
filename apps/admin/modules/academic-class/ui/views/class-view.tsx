@@ -44,7 +44,7 @@ export const ClassView = ({ classId }: ClassViewProps) => {
             <BookText className="h-4 w-4" />
             <span className="hidden sm:inline">Subjects</span>
             <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-              {classData.subjects.length}
+              {classData.subjects?.length ?? 0}
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="statistics" className="gap-2">
@@ -60,7 +60,7 @@ export const ClassView = ({ classId }: ClassViewProps) => {
           setActiveTab={setActiveTab}
         />
         <SubjectsTab
-          subjects={classData.subjects}
+          subjects={classData.subjects || []}
           className={classData.name}
           classId={classId}
         />

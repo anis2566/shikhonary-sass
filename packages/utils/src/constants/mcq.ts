@@ -5,9 +5,9 @@ import { enumToOptions } from "../enum-utils";
  * FIXED: Consistent UPPER_CASE values.
  */
 export enum MCQ_TYPE {
-  SINGLE = "SINGLE",
-  MULTIPLE = "MULTIPLE",
-  CONTEXTUAL = "CONTEXTUAL",
+  SINGLE = "Single",
+  MULTIPLE = "Multiple",
+  CONTEXTUAL = "Contextual",
 }
 
 /**

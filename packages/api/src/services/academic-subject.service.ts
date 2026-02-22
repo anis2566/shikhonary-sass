@@ -5,10 +5,12 @@ import {
   type AcademicClass,
   type AcademicChapter,
   type AcademicTopic,
+  type AcademicClassSubject,
 } from "@workspace/db";
 import {
   academicSubjectFormSchema,
   updateAcademicSubjectSchema,
+  AcademicSubjectFormValues,
   uuidSchema,
 } from "@workspace/schema";
 import { handlePrismaError } from "../middleware/error-handler";
@@ -23,7 +25,10 @@ import {
 } from "../shared/pagination";
 
 export interface SubjectWithRelations extends AcademicSubject {
-  class?: AcademicClass | null;
+  class?: AcademicClass | null; // For backward compatibility
+  classSubjects?: (AcademicClassSubject & {
+    academicClass: AcademicClass;
+  })[];
   chapters?: (AcademicChapter & {
     _count?: {
       topics: number;
@@ -111,10 +116,15 @@ export class AcademicSubjectService {
     sortOrder?: "asc" | "desc";
     isActive?: boolean;
     classId?: string;
+    sort?: string;
   }): Promise<PaginatedResponse<SubjectWithRelations> | undefined> {
     try {
       const where = buildWhere(input);
-      if (input.classId) where.classId = input.classId;
+      if (input.classId) {
+        where.classSubjects = {
+          some: { classId: input.classId },
+        };
+      }
 
       const orderBy = buildOrderBy(input);
       const pagination = buildPagination(input);
@@ -125,7 +135,11 @@ export class AcademicSubjectService {
           orderBy: input.sortBy ? orderBy : { position: "asc" },
           ...pagination,
           include: {
-            class: true,
+            classSubjects: {
+              include: {
+                academicClass: true,
+              },
+            },
             _count: {
               select: { chapters: true, mcqs: true, cqs: true },
             },
@@ -134,8 +148,13 @@ export class AcademicSubjectService {
         this.db.academicSubject.count({ where }),
       ]);
 
+      const mappedItems = items.map((item) => ({
+        ...item,
+        class: item.classSubjects?.[0]?.academicClass || null,
+      }));
+
       return createPaginatedResponse(
-        items as SubjectWithRelations[],
+        mappedItems as SubjectWithRelations[],
         total,
         input.page,
         input.limit,
@@ -148,10 +167,14 @@ export class AcademicSubjectService {
   async getById(id: string): Promise<SubjectWithRelations | null | undefined> {
     try {
       const validatedId = uuidSchema.parse(id);
-      return (await this.db.academicSubject.findUnique({
+      const item = await this.db.academicSubject.findUnique({
         where: { id: validatedId },
         include: {
-          class: true,
+          classSubjects: {
+            include: {
+              academicClass: true,
+            },
+          },
           chapters: {
             orderBy: { position: "asc" },
             include: {
@@ -164,23 +187,46 @@ export class AcademicSubjectService {
               },
             },
           },
+          _count: {
+            select: {
+              chapters: true,
+              mcqs: true,
+              cqs: true,
+            },
+          },
         },
-      })) as SubjectWithRelations | null;
+      });
+
+      if (!item) return null;
+
+      return {
+        ...item,
+        class: item.classSubjects?.[0]?.academicClass || null,
+      } as SubjectWithRelations;
     } catch (error) {
       handlePrismaError(error);
     }
   }
 
-  async create(input: AcademicSubject): Promise<AcademicSubject | undefined> {
+  async create(
+    input: AcademicSubjectFormValues,
+  ): Promise<AcademicSubject | undefined> {
     try {
       const data = academicSubjectFormSchema.parse(input);
-      if (data.position === undefined) {
-        const count = await this.db.academicSubject.count({
-          where: { classId: data.classId },
-        });
-        data.position = count;
-      }
-      return await this.db.academicSubject.create({ data });
+
+      const { classIds, ...subjectData } = data;
+
+      return await this.db.academicSubject.create({
+        data: {
+          ...subjectData,
+          classSubjects: {
+            create: classIds.map((cid) => ({
+              classId: cid,
+              position: subjectData.position || 0,
+            })),
+          },
+        },
+      });
     } catch (error) {
       handlePrismaError(error);
     }
@@ -188,14 +234,37 @@ export class AcademicSubjectService {
 
   async update(
     id: string,
-    input: AcademicSubject,
+    input: Partial<AcademicSubjectFormValues>,
   ): Promise<AcademicSubject | undefined> {
     try {
       const validatedId = uuidSchema.parse(id);
       const data = updateAcademicSubjectSchema.parse(input);
-      return await this.db.academicSubject.update({
-        where: { id: validatedId },
-        data,
+
+      const { classIds, ...subjectData } = data;
+
+      return await this.db.$transaction(async (tx) => {
+        if (classIds) {
+          // Delete old relations
+          await tx.academicClassSubject.deleteMany({
+            where: { subjectId: validatedId },
+          });
+
+          // Create new relations
+          if (classIds.length > 0) {
+            await tx.academicClassSubject.createMany({
+              data: classIds.map((cid) => ({
+                classId: cid,
+                subjectId: validatedId,
+                position: subjectData.position || 0,
+              })),
+            });
+          }
+        }
+
+        return await tx.academicSubject.update({
+          where: { id: validatedId },
+          data: subjectData as any,
+        });
       });
     } catch (error) {
       handlePrismaError(error);
@@ -241,12 +310,26 @@ export class AcademicSubjectService {
     | undefined
   > {
     try {
-      const where = classId ? { classId } : {};
+      const where: any = {};
+      if (classId) {
+        where.classSubjects = {
+          some: { classId },
+        };
+      }
+
       const [total, active, totalChapters] = await Promise.all([
         this.db.academicSubject.count({ where }),
         this.db.academicSubject.count({ where: { ...where, isActive: true } }),
         this.db.academicChapter.count({
-          where: { subject: where },
+          where: {
+            subject: classId
+              ? {
+                  classSubjects: {
+                    some: { classId },
+                  },
+                }
+              : {},
+          },
         }),
       ]);
       return {
@@ -476,8 +559,12 @@ export class AcademicSubjectService {
     classId?: string,
   ): Promise<{ id: string; displayName: string }[] | undefined> {
     try {
-      const where: { isActive: boolean; classId?: string } = { isActive: true };
-      if (classId) where.classId = classId;
+      const where: any = { isActive: true }; // prisma "where" is hard to type precisely without internal types
+      if (classId) {
+        where.classSubjects = {
+          some: { classId },
+        };
+      }
 
       return await this.db.academicSubject.findMany({
         where,

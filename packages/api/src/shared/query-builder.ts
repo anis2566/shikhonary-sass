@@ -18,7 +18,15 @@ export function buildPagination(input: { page: number; limit: number }) {
 export function buildOrderBy(input: {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+  sort?: string;
 }) {
+  if (input.sort) {
+    if (input.sort === "ASC") return { createdAt: "asc" as const };
+    if (input.sort === "DESC") return { createdAt: "desc" as const };
+    if (input.sort === "POSITION_ASC") return { position: "asc" as const };
+    if (input.sort === "POSITION_DESC") return { position: "desc" as const };
+  }
+
   if (!input.sortBy) {
     return { createdAt: "desc" as const };
   }

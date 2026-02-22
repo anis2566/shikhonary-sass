@@ -6,7 +6,7 @@ import { nameSchema, uuidSchema } from "./shared/fields";
  */
 
 export const academicSubjectFormSchema = z.object({
-  classId: z.string().min(1, "Please select a class"),
+  classIds: z.array(z.string()).min(1, "Please select at least one class"),
   name: nameSchema,
   displayName: nameSchema,
   code: z.string().max(20, "Code must be less than 20 characters").nullable(),
@@ -20,7 +20,7 @@ export type AcademicSubjectFormValues = z.infer<
 >;
 
 export const defaultAcademicSubjectValues: AcademicSubjectFormValues = {
-  classId: "",
+  classIds: [],
   name: "",
   displayName: "",
   code: null,

@@ -290,7 +290,7 @@ export function useDeactivateAcademicSubject() {
 export function useAcademicSubjects() {
   const trpc = useTRPC();
   const [filters, _] = useAcademicSubjectFilters();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicSubject.list.queryOptions(filters),
     select: (data) => data.data,
   });
@@ -314,7 +314,7 @@ export function useAcademicSubjectStats(classId?: string) {
 
 export function useAcademicSubjectsForSelection(classId?: string) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicSubject.forSelection.queryOptions({ classId }),
     select: (data) => data.data,
   });
@@ -351,7 +351,7 @@ export function useAcademicSubjectStatistics(id: string) {
  */
 export function useAcademicSubjectRecentChapters(subjectId: string, limit = 4) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicSubject.getRecentChapters.queryOptions({
       subjectId,
       limit,
@@ -365,7 +365,7 @@ export function useAcademicSubjectRecentChapters(subjectId: string, limit = 4) {
  */
 export function useAcademicSubjectRecentTopics(subjectId: string, limit = 4) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicSubject.getRecentTopics.queryOptions({ subjectId, limit }),
     select: (data) => data.data,
   });

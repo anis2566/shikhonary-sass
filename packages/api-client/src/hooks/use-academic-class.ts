@@ -2,6 +2,7 @@
 
 import {
   useMutation,
+  useQuery,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
@@ -335,7 +336,7 @@ export function useAcademicClasses() {
         : ("asc" as const),
   };
 
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicClass.list.queryOptions(input),
     select: (data) => data.data,
   });
@@ -346,7 +347,7 @@ export function useAcademicClasses() {
  */
 export function useAcademicClassById(id: string) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicClass.getById.queryOptions({ id }),
     select: (data) => data.data,
   });
@@ -357,7 +358,7 @@ export function useAcademicClassById(id: string) {
  */
 export function useAcademicClassStats() {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicClass.getStats.queryOptions(),
     select: (data) => data.data,
   });
@@ -368,7 +369,7 @@ export function useAcademicClassStats() {
  */
 export function useAcademicClassDetailedStats(id: string) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicClass.getDetailedStats.queryOptions({ id }),
     select: (data) => data.data,
   });
@@ -379,7 +380,7 @@ export function useAcademicClassDetailedStats(id: string) {
  */
 export function useAcademicClassStatistics(id: string) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicClass.getStatisticsData.queryOptions({ id }),
     select: (data) => data.data,
   });
@@ -390,7 +391,7 @@ export function useAcademicClassStatistics(id: string) {
  */
 export function useAcademicClassRecentTopics(classId: string, limit = 4) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicClass.getRecentTopics.queryOptions({ classId, limit }),
     select: (data) => data.data,
   });
@@ -398,7 +399,7 @@ export function useAcademicClassRecentTopics(classId: string, limit = 4) {
 
 export function useAcademicClassesForSelection() {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicClass.forSelection.queryOptions(),
     select: (data) => data.data,
   });

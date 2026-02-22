@@ -73,6 +73,18 @@ export const mcqRouter = createTRPCRouter({
       };
     }),
 
+  bulkCreate: baseMutationProcedure
+    .input(z.array(z.any()))
+    .mutation(async ({ ctx, input }) => {
+      const service = new McqService(ctx.db);
+      const data = await service.bulkCreate(input);
+      return {
+        success: true,
+        message: `${data?.count ?? 0} MCQs created successfully`,
+        data,
+      };
+    }),
+
   bulkDelete: baseMutationProcedure
     .input(z.object({ ids: z.array(z.string()) }))
     .mutation(async ({ ctx, input }) => {

@@ -2,6 +2,7 @@
 
 import {
   useMutation,
+  useQuery,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
@@ -113,6 +114,112 @@ export function useBulkDeleteMCQs() {
   });
 }
 
+/**
+ * Mutation hook for bulk creating MCQs (import)
+ */
+export function useBulkCreateMCQs() {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    ...trpc.mcq.bulkCreate.mutationOptions(),
+    onError: (error) => {
+      toast.error(error.message || "Failed to import MCQs");
+    },
+    onSuccess: async (data) => {
+      if (data.success) {
+        toast.success(data.message);
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.mcq.list.queryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.mcq.getStats.queryKey(),
+          }),
+        ]);
+      } else {
+        toast.error(data.message);
+      }
+    },
+  });
+}
+
+/**
+ * Mutation hook for activating a single MCQ
+ */
+export function useActivateMCQ() {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    ...trpc.mcq.update.mutationOptions(),
+    onError: (error) => {
+      toast.error(error.message || "Failed to activate MCQ");
+    },
+    onSuccess: async (data, variables) => {
+      if (data.success) {
+        toast.success("MCQ activated successfully");
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.mcq.list.queryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.mcq.getById.queryKey({ id: variables.id }),
+          }),
+        ]);
+      } else {
+        toast.error(data.message);
+      }
+    },
+  });
+
+  return {
+    ...mutation,
+    mutate: (vars: { id: string }) =>
+      mutation.mutate({ id: vars.id, data: { isActive: true } }),
+    mutateAsync: (vars: { id: string }) =>
+      mutation.mutateAsync({ id: vars.id, data: { isActive: true } }),
+  };
+}
+
+/**
+ * Mutation hook for deactivating a single MCQ
+ */
+export function useDeactivateMCQ() {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    ...trpc.mcq.update.mutationOptions(),
+    onError: (error) => {
+      toast.error(error.message || "Failed to deactivate MCQ");
+    },
+    onSuccess: async (data, variables) => {
+      if (data.success) {
+        toast.success("MCQ deactivated successfully");
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.mcq.list.queryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.mcq.getById.queryKey({ id: variables.id }),
+          }),
+        ]);
+      } else {
+        toast.error(data.message);
+      }
+    },
+  });
+
+  return {
+    ...mutation,
+    mutate: (vars: { id: string }) =>
+      mutation.mutate({ id: vars.id, data: { isActive: false } }),
+    mutateAsync: (vars: { id: string }) =>
+      mutation.mutateAsync({ id: vars.id, data: { isActive: false } }),
+  };
+}
+
 // ============================================================================
 // MCQ QUERIES
 // ============================================================================
@@ -123,7 +230,7 @@ export function useBulkDeleteMCQs() {
 export function useMCQs() {
   const trpc = useTRPC();
   const [filters, _] = useMCQFilters();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.mcq.list.queryOptions(filters),
     select: (data: any) => data.data,
   });
@@ -134,7 +241,7 @@ export function useMCQs() {
  */
 export function useMCQById(id: string) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.mcq.getById.queryOptions({ id }),
     select: (data: any) => data.data,
   });
@@ -143,10 +250,10 @@ export function useMCQById(id: string) {
 /**
  * Hook for getting MCQ statistics
  */
-export function useMCQStats(filters: any) {
+export function useMCQStats(chapterId?: string) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
-    ...trpc.mcq.getStats.queryOptions(filters),
+  return useQuery({
+    ...trpc.mcq.getStats.queryOptions({ chapterId }),
     select: (data: any) => data.data,
   });
 }

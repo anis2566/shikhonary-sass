@@ -64,6 +64,7 @@ export const ModelName = {
   Invoice: 'Invoice',
   AcademicClass: 'AcademicClass',
   AcademicSubject: 'AcademicSubject',
+  AcademicClassSubject: 'AcademicClassSubject',
   AcademicChapter: 'AcademicChapter',
   AcademicTopic: 'AcademicTopic',
   AcademicSubTopic: 'AcademicSubTopic',
@@ -340,12 +341,22 @@ export const AcademicSubjectScalarFieldEnum = {
   group: 'group',
   position: 'position',
   isActive: 'isActive',
-  classId: 'classId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type AcademicSubjectScalarFieldEnum = (typeof AcademicSubjectScalarFieldEnum)[keyof typeof AcademicSubjectScalarFieldEnum]
+
+
+export const AcademicClassSubjectScalarFieldEnum = {
+  id: 'id',
+  classId: 'classId',
+  subjectId: 'subjectId',
+  position: 'position',
+  createdAt: 'createdAt'
+} as const
+
+export type AcademicClassSubjectScalarFieldEnum = (typeof AcademicClassSubjectScalarFieldEnum)[keyof typeof AcademicClassSubjectScalarFieldEnum]
 
 
 export const AcademicChapterScalarFieldEnum = {

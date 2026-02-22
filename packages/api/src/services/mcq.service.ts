@@ -29,6 +29,7 @@ export class McqService {
     subjectId?: string;
     chapterId?: string;
     type?: string;
+    isMath?: boolean;
   }): Promise<
     PaginatedResponse<MCQ & { subject: any; chapter: any }> | undefined
   > {
@@ -37,6 +38,7 @@ export class McqService {
       if (input.subjectId) where.subjectId = input.subjectId;
       if (input.chapterId) where.chapterId = input.chapterId;
       if (input.type) where.type = input.type;
+      if (input.isMath) where.isMath = input.isMath;
 
       const orderBy = buildOrderBy(input);
       const pagination = buildPagination(input);
@@ -103,6 +105,24 @@ export class McqService {
       const validatedId = uuidSchema.parse(id);
       const item = await this.db.mcq.delete({ where: { id: validatedId } });
       return item as unknown as MCQ;
+    } catch (error) {
+      handlePrismaError(error);
+    }
+  }
+
+  async bulkCreate(items: unknown[]): Promise<{ count: number } | undefined> {
+    try {
+      const validated = z.array(mcqFormSchema).parse(items);
+      const result = await this.db.$transaction(async (tx) => {
+        return tx.mcq.createMany({
+          data: validated.map((item) => ({
+            ...item,
+            topicId: (item as any).topicId || null,
+            subTopicId: (item as any).subTopicId || null,
+          })),
+        });
+      });
+      return result;
     } catch (error) {
       handlePrismaError(error);
     }

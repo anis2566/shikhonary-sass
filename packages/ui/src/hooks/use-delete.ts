@@ -9,7 +9,9 @@ export type DeleteEntityType =
   | "subtopic"
   | "mcq"
   | "tenant"
-  | "subscriptionPlan";
+  | "subscriptionPlan"
+  | "subscription"
+  | "mcq";
 
 interface DeleteModalState {
   isOpen: boolean;

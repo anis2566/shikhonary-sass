@@ -86,7 +86,7 @@ export function EditTopicForm({ topicId }: EditTopicFormProps) {
         displayName: topic.displayName,
         chapterId: topic.chapterId,
         subjectId: topic.chapter.subject.id,
-        classId: topic.chapter.subject.class.id,
+        classId: topic.chapter.subject.class?.id || "",
         parentId: "none", // Currently editing a top-level topic, sub-topic edit would be different
         position: topic.position,
         isActive: topic.isActive,

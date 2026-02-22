@@ -1,4 +1,9 @@
-import { parseAsString, parseAsInteger, parseAsStringEnum } from "nuqs/server";
+import {
+  parseAsString,
+  parseAsInteger,
+  parseAsStringEnum,
+  parseAsBoolean,
+} from "nuqs/server";
 import {
   DEFAULT_PAGE,
   DEFAULT_PAGE_SIZE,
@@ -121,6 +126,7 @@ export const mcqFilterSchema = {
   type: parseAsStringEnum(Object.values(MCQ_TYPE)).withOptions({
     clearOnDefault: true,
   }),
+  isMath: parseAsBoolean.withOptions({ clearOnDefault: true }),
 };
 
 /**

@@ -2,6 +2,7 @@
 
 import {
   useMutation,
+  useQuery,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
@@ -342,7 +343,7 @@ export function useAcademicChapters() {
         : ("asc" as const),
   };
 
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicChapter.list.queryOptions(input),
     select: (data) => data.data as PaginatedResponse<ChapterWithRelations>,
   });
@@ -350,7 +351,7 @@ export function useAcademicChapters() {
 
 export function useAcademicChapterById(id: string) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicChapter.getById.queryOptions({ id }),
     select: (res) => res.data as ChapterWithRelations,
   });
@@ -358,7 +359,7 @@ export function useAcademicChapterById(id: string) {
 
 export function useAcademicChapterStats(subjectId?: string) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicChapter.getStats.queryOptions({ subjectId }),
     select: (data) => data.data,
   });
@@ -369,7 +370,7 @@ export function useAcademicChapterStats(subjectId?: string) {
  */
 export function useAcademicChapterDetailedStats(id: string) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicChapter.getDetailedStats.queryOptions({ id }),
     select: (data) => data.data as ChapterDetailedStats,
   });
@@ -380,7 +381,7 @@ export function useAcademicChapterDetailedStats(id: string) {
  */
 export function useAcademicChapterStatistics(id: string) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicChapter.getStatisticsData.queryOptions({ id }),
     select: (data) => data.data as ChapterStatisticsData,
   });
@@ -391,7 +392,7 @@ export function useAcademicChapterStatistics(id: string) {
  */
 export function useAcademicChapterRecentTopics(chapterId: string, limit = 4) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicChapter.getRecentTopics.queryOptions({ chapterId, limit }),
     select: (data) => data.data as RecentTopicsResponse,
   });
@@ -402,7 +403,7 @@ export function useAcademicChapterRecentTopics(chapterId: string, limit = 4) {
  */
 export function useAcademicChaptersForSelection(subjectId?: string) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicChapter.list.queryOptions({
       page: 1,
       limit: 100,

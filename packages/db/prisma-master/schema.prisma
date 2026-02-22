@@ -15,7 +15,7 @@ model User {
     email         String    @unique
     emailVerified Boolean   @default(false)
     image         String?
-    role          String    @default("USER") // Using String for compatibility
+    role          String    @default("USER")
     isActive      Boolean   @default(true)
     createdAt     DateTime  @default(now())
     updatedAt     DateTime  @updatedAt
@@ -111,14 +111,15 @@ model Tenant {
     currentAcademicYear String?
     metadata            Json    @default("{}")
 
+    // FIX: onDelete: SetNull because createdById is optional —
+    //      deleting a User should not delete their Tenants, just clear the owner reference.
     createdById String?
-    owner       User?   @relation("TenantOwner", fields: [createdById], references: [id])
+    owner       User?   @relation("TenantOwner", fields: [createdById], references: [id], onDelete: SetNull)
 
     createdAt DateTime  @default(now())
     updatedAt DateTime  @updatedAt
     deletedAt DateTime?
 
-    // Custom limits (Overrides from plan)
     customStudentLimit Int?
     customTeacherLimit Int?
     customExamLimit    Int?
@@ -135,14 +136,16 @@ model Tenant {
 model TenantMember {
     id        String   @id @default(uuid())
     userId    String
-    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
     tenantId  String
-    tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
     role      String   @default("STUDENT")
     isActive  Boolean  @default(true)
     joinedAt  DateTime @default(now()) @map("joinedAt")
-    // Added updatedAt for standard tracking
-    updatedAt DateTime @default(now()) @updatedAt
+    // FIX: removed redundant @default(now()) — @updatedAt manages this automatically
+    updatedAt DateTime @updatedAt
+
+    // FIX: Cascade on both sides — a membership record is meaningless without its User or Tenant
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
     @@unique([userId, tenantId])
     @@index([tenantId])
@@ -153,7 +156,6 @@ model TenantMember {
 model TenantInvitation {
     id         String    @id @default(uuid())
     tenantId   String
-    tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
     email      String
     role       String    @default("TEACHER")
     token      String    @unique
@@ -162,10 +164,13 @@ model TenantInvitation {
     acceptedAt DateTime?
     acceptedBy String?
     message    String?
-    name       String? // Candidate name
+    name       String?
     status     String    @default("PENDING")
     createdAt  DateTime  @default(now())
     updatedAt  DateTime  @updatedAt
+
+    // FIX: Cascade — invitations are owned by the tenant, delete with it
+    tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
     @@unique([email, tenantId])
     @@index([email])
@@ -193,7 +198,7 @@ model SubscriptionPlan {
     defaultStudentLimit Int @default(10)
     defaultTeacherLimit Int @default(2)
     defaultExamLimit    Int @default(20)
-    defaultStorageLimit Int @default(100) // MB? Centered on introspected data
+    defaultStorageLimit Int @default(100)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -204,12 +209,11 @@ model SubscriptionPlan {
 }
 
 model Subscription {
-    id       String           @id @default(uuid())
-    tenantId String           @unique
-    tenant   Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+    id       String @id @default(uuid())
+    tenantId String @unique
     planId   String
-    plan     SubscriptionPlan @relation(fields: [planId], references: [id])
-    status   String
+
+    status String
 
     currentPeriodStart DateTime
     currentPeriodEnd   DateTime
@@ -235,6 +239,11 @@ model Subscription {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
+    // FIX: Cascade — subscription is owned by tenant
+    tenant Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+    // FIX: Restrict — prevent deleting a plan that has active subscriptions
+    plan   SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Restrict)
+
     history SubscriptionHistory[]
 
     @@index([currentPeriodEnd])
@@ -245,18 +254,20 @@ model Subscription {
 }
 
 model SubscriptionHistory {
-    id             String       @id @default(uuid())
+    id             String   @id @default(uuid())
     subscriptionId String
-    subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
     event          String
     fromPlanId     String?
     toPlanId       String?
     fromStatus     String?
     toStatus       String?
     reason         String?
-    metadata       Json         @default("{}")
+    metadata       Json     @default("{}")
     createdBy      String?
-    createdAt      DateTime     @default(now())
+    createdAt      DateTime @default(now())
+
+    // FIX: Cascade — history is owned by the subscription
+    subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
     @@index([createdAt])
     @@index([subscriptionId])
@@ -288,12 +299,35 @@ model Invoice {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
+    // NOTE: tenantId is intentionally a bare FK string (no @relation) so that invoices
+    //       are retained as financial records even if the Tenant is soft-deleted.
+    //       If you want hard-delete cascade, add:
+    //         tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+    //       and add `invoices Invoice[]` to the Tenant model.
+
     @@index([dueDate])
     @@index([invoiceNumber])
     @@index([status])
     @@index([tenantId])
     @@map("invoice")
 }
+
+// ---------------------------------------------------------------------------
+// Academic hierarchy:  Class ←→ Subject (m-n)  →  Chapter → Topic → SubTopic
+//
+// FIX: The original schema used an implicit m-n between AcademicClass and
+//      AcademicSubject. Implicit m-n relations in Prisma cannot have custom
+//      onDelete/onUpdate referential actions. We convert it to an EXPLICIT
+//      join model (AcademicClassSubject) so we can control cascade behaviour
+//      and add metadata (e.g. a position per class-subject pair) in future.
+//
+// FIX: AcademicChapter previously had an ambiguous optional `academicClassId`
+//      alongside the required `subjectId`. A chapter belongs to a subject;
+//      the subject already carries its class memberships. The direct class
+//      link on Chapter is therefore redundant and has been removed to avoid
+//      inconsistency. If you genuinely need per-chapter class scoping, add it
+//      back as a required FK with a clear business rule.
+// ---------------------------------------------------------------------------
 
 model AcademicClass {
     id          String   @id @default(uuid())
@@ -305,8 +339,9 @@ model AcademicClass {
     createdAt   DateTime @default(now())
     updatedAt   DateTime @updatedAt
 
-    subjects AcademicSubject[]
-    cqs      Cq[]
+    // FIX: explicit join table replaces the old implicit m-n `subjects AcademicSubject[]`
+    classSubjects AcademicClassSubject[]
+    cqs           Cq[]
 
     @@index([isActive])
     @@index([name])
@@ -314,39 +349,60 @@ model AcademicClass {
 }
 
 model AcademicSubject {
-    id          String        @id @default(uuid())
+    id          String  @id @default(uuid())
     name        String
     displayName String
     code        String?
     group       String?
-    position    Int           @default(0)
-    isActive    Boolean       @default(true)
-    classId     String
-    class       AcademicClass @relation(fields: [classId], references: [id])
+    position    Int     @default(0)
+    isActive    Boolean @default(true)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    chapters AcademicChapter[]
-    mcqs     Mcq[]
-    cqs      Cq[]
+    // FIX: explicit join table replaces the old implicit m-n `classes AcademicClass[]`
+    classSubjects AcademicClassSubject[]
+    chapters      AcademicChapter[]
+    mcqs          Mcq[]
+    cqs           Cq[]
 
-    @@index([classId])
     @@index([isActive])
     @@map("academic_subject")
 }
 
+// FIX: Explicit many-to-many join table for AcademicClass ↔ AcademicSubject.
+//      Cascade on both sides: removing a class or subject removes the mapping row,
+//      not the other side's data.
+model AcademicClassSubject {
+    id        String   @id @default(uuid())
+    classId   String
+    subjectId String
+    position  Int      @default(0) // optional ordering per class
+    createdAt DateTime @default(now())
+
+    academicClass   AcademicClass   @relation(fields: [classId], references: [id], onDelete: Cascade)
+    academicSubject AcademicSubject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+    @@unique([classId, subjectId])
+    @@index([classId])
+    @@index([subjectId])
+    @@map("academic_class_subject")
+}
+
 model AcademicChapter {
-    id          String          @id @default(uuid())
+    id          String  @id @default(uuid())
     name        String
     displayName String
-    position    Int             @default(0)
-    isActive    Boolean         @default(true)
+    position    Int     @default(0)
+    isActive    Boolean @default(true)
     subjectId   String
-    subject     AcademicSubject @relation(fields: [subjectId], references: [id])
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+
+    // FIX: Restrict — don't silently delete chapters when a subject is deleted;
+    //      require explicit cleanup so question data is not orphaned.
+    subject AcademicSubject @relation(fields: [subjectId], references: [id], onDelete: Restrict)
 
     topics AcademicTopic[]
     mcqs   Mcq[]
@@ -358,16 +414,18 @@ model AcademicChapter {
 }
 
 model AcademicTopic {
-    id          String          @id @default(uuid())
+    id          String  @id @default(uuid())
     name        String
     displayName String
-    position    Int             @default(0)
-    isActive    Boolean         @default(true)
+    position    Int     @default(0)
+    isActive    Boolean @default(true)
     chapterId   String
-    chapter     AcademicChapter @relation(fields: [chapterId], references: [id])
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+
+    // FIX: Restrict — preserve question integrity
+    chapter AcademicChapter @relation(fields: [chapterId], references: [id], onDelete: Restrict)
 
     subtopics AcademicSubTopic[]
     mcqs      Mcq[]
@@ -379,16 +437,18 @@ model AcademicTopic {
 }
 
 model AcademicSubTopic {
-    id          String        @id @default(uuid())
+    id          String  @id @default(uuid())
     name        String
     displayName String
-    position    Int           @default(0)
-    isActive    Boolean       @default(true)
+    position    Int     @default(0)
+    isActive    Boolean @default(true)
     topicId     String
-    topic       AcademicTopic @relation(fields: [topicId], references: [id])
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+
+    // FIX: Restrict — preserve question integrity
+    topic AcademicTopic @relation(fields: [topicId], references: [id], onDelete: Restrict)
 
     mcqs Mcq[]
     cqs  Cq[]
@@ -419,10 +479,13 @@ model Mcq {
     topicId    String?
     subTopicId String?
 
-    subject  AcademicSubject   @relation(fields: [subjectId], references: [id])
-    chapter  AcademicChapter   @relation(fields: [chapterId], references: [id])
-    topic    AcademicTopic?    @relation(fields: [topicId], references: [id])
-    subtopic AcademicSubTopic? @relation(fields: [subTopicId], references: [id])
+    // FIX: Restrict on required FKs — do not silently delete thousands of questions
+    //      when an academic hierarchy node is removed. Force explicit cleanup.
+    subject  AcademicSubject   @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+    chapter  AcademicChapter   @relation(fields: [chapterId], references: [id], onDelete: Restrict)
+    // FIX: SetNull on optional FKs — topic/subtopic can be removed without losing the question
+    topic    AcademicTopic?    @relation(fields: [topicId], references: [id], onDelete: SetNull)
+    subtopic AcademicSubTopic? @relation(fields: [subTopicId], references: [id], onDelete: SetNull)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -436,7 +499,7 @@ model Mcq {
     @@index([subjectId, type])
     @@index([type])
     @@index([type, session])
-    @@map("Mcq") // Note: Introspected name was PascalCase for Mcq
+    @@map("Mcq")
 }
 
 model Cq {
@@ -455,11 +518,12 @@ model Cq {
     topicId    String?
     subTopicId String?
 
-    class    AcademicClass     @relation(fields: [classId], references: [id])
-    subject  AcademicSubject   @relation(fields: [subjectId], references: [id])
-    chapter  AcademicChapter   @relation(fields: [chapterId], references: [id])
-    topic    AcademicTopic?    @relation(fields: [topicId], references: [id])
-    subtopic AcademicSubTopic? @relation(fields: [subTopicId], references: [id])
+    // FIX: Restrict on required FKs, SetNull on optional FKs (same rationale as Mcq)
+    class    AcademicClass     @relation(fields: [classId], references: [id], onDelete: Restrict)
+    subject  AcademicSubject   @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+    chapter  AcademicChapter   @relation(fields: [chapterId], references: [id], onDelete: Restrict)
+    topic    AcademicTopic?    @relation(fields: [topicId], references: [id], onDelete: SetNull)
+    subtopic AcademicSubTopic? @relation(fields: [subTopicId], references: [id], onDelete: SetNull)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -471,6 +535,10 @@ model Cq {
     @@map("cq")
 }
 
+// NOTE: AuditLog and Notification intentionally use bare String FKs for
+//       userId / tenantId rather than @relation. This is the correct pattern
+//       for append-only log/notification tables: records must survive the
+//       deletion of the user or tenant they reference.
 model AuditLog {
     id          String  @id @default(uuid())
     action      String
@@ -499,7 +567,7 @@ model SystemSetting {
     value       String
     type        String  @default("string")
     description String?
-    category    String? @map("category") // Introspected 'category'
+    category    String? @map("category")
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

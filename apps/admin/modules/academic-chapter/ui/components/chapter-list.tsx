@@ -48,6 +48,22 @@ import { cn } from "@workspace/ui/lib/utils";
 import { SortableRow } from "./sortable-row";
 import { useAcademicChapters } from "@workspace/api-client";
 
+interface ChapterWithRelations extends AcademicChapter {
+  subject?: {
+    id: string;
+    displayName: string;
+    class?: {
+      id: string;
+      displayName: string;
+    } | null;
+  } | null;
+  _count?: {
+    topics: number;
+    mcqs: number;
+    cqs?: number;
+  };
+}
+
 export interface Column<T> {
   key: keyof T | string;
   header: string;
@@ -55,9 +71,7 @@ export interface Column<T> {
   render?: (item: T) => React.ReactNode;
 }
 
-const columns: Column<
-  AcademicChapter & { subject?: { displayName: string } }
->[] = [
+const columns: Column<ChapterWithRelations>[] = [
   {
     key: "displayName",
     header: "Chapter",
@@ -106,7 +120,7 @@ const columns: Column<
 ];
 
 interface ChapterListProps {
-  onReorder: (items: AcademicChapter[]) => void;
+  onReorder: (items: ChapterWithRelations[]) => void;
   disableReorder?: boolean;
   selectedIds: string[];
   setSelectedIds: Dispatch<SetStateAction<string[]>>;
@@ -195,12 +209,14 @@ export function ChapterList({
     if (over && active.id !== over.id) {
       const oldIndex = chapters.findIndex((item) => item.id === active.id);
       const newIndex = chapters.findIndex((item) => item.id === over.id);
-      const newData = arrayMove(chapters, oldIndex, newIndex).map(
-        (item, index) => ({
-          ...item,
-          position: index,
-        }),
-      );
+      const newData = arrayMove(
+        (data?.items as ChapterWithRelations[]) || [],
+        oldIndex,
+        newIndex,
+      ).map((item, index) => ({
+        ...item,
+        position: index,
+      }));
       onReorder(newData);
     }
   };

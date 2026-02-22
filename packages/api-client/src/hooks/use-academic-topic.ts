@@ -4,6 +4,7 @@ import {
   useMutation,
   useQueryClient,
   useSuspenseQuery,
+  useQuery,
 } from "@tanstack/react-query";
 import { toast } from "@workspace/ui/components/sonner";
 import type {
@@ -297,7 +298,7 @@ export function useDeactivateAcademicTopic() {
 export function useAcademicTopics() {
   const trpc = useTRPC();
   const [filters, _] = useAcademicTopicFilters();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicTopic.list.queryOptions(filters),
     select: (data) => data.data as PaginatedResponse<TopicWithRelations>,
   });
@@ -305,7 +306,7 @@ export function useAcademicTopics() {
 
 export function useAcademicTopicById(id: string) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicTopic.getById.queryOptions({ id }),
     select: (data) => data.data as TopicWithRelations,
   });
@@ -313,7 +314,7 @@ export function useAcademicTopicById(id: string) {
 
 export function useAcademicTopicStats(chapterId?: string) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicTopic.getStats.queryOptions({ chapterId }),
     select: (data) => data.data,
   });
@@ -321,7 +322,7 @@ export function useAcademicTopicStats(chapterId?: string) {
 
 export function useAcademicTopicsForSelection(chapterId?: string) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicTopic.forSelection.queryOptions({ chapterId }),
     select: (data) => data.data,
   });
@@ -336,7 +337,7 @@ export function useAcademicTopicByChapterId(chapterId: string) {
  */
 export function useAcademicTopicDetailedStats(id: string) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicTopic.getDetailedStats.queryOptions({ id }),
     select: (data) => data.data as TopicDetailedStats,
   });
@@ -347,7 +348,7 @@ export function useAcademicTopicDetailedStats(id: string) {
  */
 export function useAcademicTopicRecentSubTopics(topicId: string, limit = 5) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicTopic.getRecentSubTopics.queryOptions({ topicId, limit }),
     select: (data) => data.data as RecentSubTopic[],
   });
@@ -358,7 +359,7 @@ export function useAcademicTopicRecentSubTopics(topicId: string, limit = 5) {
  */
 export function useAcademicTopicStatistics(id: string) {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.academicTopic.getStatisticsData.queryOptions({ id }),
     select: (data) => data.data as TopicStatisticsData,
   });

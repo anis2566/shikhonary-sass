@@ -105,6 +105,11 @@ export type AcademicClass = Prisma.AcademicClassModel
  */
 export type AcademicSubject = Prisma.AcademicSubjectModel
 /**
+ * Model AcademicClassSubject
+ * 
+ */
+export type AcademicClassSubject = Prisma.AcademicClassSubjectModel
+/**
  * Model AcademicChapter
  * 
  */

@@ -29,11 +29,18 @@ export interface SubTopicWithRelations extends AcademicSubTopic {
         id: string;
         name: string;
         displayName: string;
-        class: {
+        classSubjects?: {
+          academicClass: {
+            id: string;
+            name: string;
+            displayName: string;
+          };
+        }[];
+        class?: {
           id: string;
           name: string;
           displayName: string;
-        };
+        } | null; // for backward compatibility
       };
     };
   };
@@ -90,6 +97,7 @@ export class AcademicSubTopicService {
     subjectId?: string;
     chapterId?: string;
     topicId?: string;
+    sort?: string;
   }): Promise<PaginatedResponse<SubTopicWithRelations> | undefined> {
     try {
       const where: any = buildWhere(input);
@@ -101,7 +109,13 @@ export class AcademicSubTopicService {
       } else if (input.subjectId) {
         where.topic = { chapter: { subjectId: input.subjectId } };
       } else if (input.classId) {
-        where.topic = { chapter: { subject: { classId: input.classId } } };
+        where.topic = {
+          chapter: {
+            subject: {
+              classSubjects: { some: { classId: input.classId } },
+            },
+          },
+        };
       }
 
       const orderBy = buildOrderBy(input);
@@ -115,7 +129,17 @@ export class AcademicSubTopicService {
           include: {
             topic: {
               include: {
-                chapter: { include: { subject: { include: { class: true } } } },
+                chapter: {
+                  include: {
+                    subject: {
+                      include: {
+                        classSubjects: {
+                          include: { academicClass: true },
+                        },
+                      },
+                    },
+                  },
+                },
               },
             },
             _count: {
@@ -126,8 +150,24 @@ export class AcademicSubTopicService {
         this.db.academicSubTopic.count({ where }),
       ]);
 
+      const mappedItems = items.map((item) => ({
+        ...item,
+        topic: {
+          ...item.topic,
+          chapter: {
+            ...item.topic.chapter,
+            subject: {
+              ...item.topic.chapter.subject,
+              class:
+                item.topic.chapter.subject.classSubjects?.[0]?.academicClass ||
+                null,
+            },
+          },
+        },
+      }));
+
       return createPaginatedResponse(
-        items as SubTopicWithRelations[],
+        mappedItems as SubTopicWithRelations[],
         total,
         input.page,
         input.limit,
@@ -145,7 +185,17 @@ export class AcademicSubTopicService {
         include: {
           topic: {
             include: {
-              chapter: { include: { subject: { include: { class: true } } } },
+              chapter: {
+                include: {
+                  subject: {
+                    include: {
+                      classSubjects: {
+                        include: { academicClass: true },
+                      },
+                    },
+                  },
+                },
+              },
             },
           },
           _count: {
@@ -153,13 +203,32 @@ export class AcademicSubTopicService {
           },
         },
       });
-      return item as SubTopicWithRelations | null;
+
+      if (!item) return null;
+
+      return {
+        ...item,
+        topic: {
+          ...item.topic,
+          chapter: {
+            ...item.topic.chapter,
+            subject: {
+              ...item.topic.chapter.subject,
+              class:
+                item.topic.chapter.subject.classSubjects?.[0]?.academicClass ||
+                null,
+            },
+          },
+        },
+      } as SubTopicWithRelations;
     } catch (error) {
       handlePrismaError(error);
     }
   }
 
-  async create(input: AcademicSubTopic): Promise<AcademicSubTopic | undefined> {
+  async create(
+    input: z.infer<typeof academicSubTopicFormSchema>,
+  ): Promise<AcademicSubTopic | undefined> {
     try {
       const data = academicSubTopicFormSchema.parse(input);
       const { classId, subjectId, chapterId, ...prismaData } = data;
@@ -180,7 +249,7 @@ export class AcademicSubTopicService {
 
   async update(
     id: string,
-    input: AcademicSubTopic,
+    input: z.infer<typeof updateAcademicSubTopicSchema>,
   ): Promise<AcademicSubTopic | undefined> {
     try {
       const validatedId = uuidSchema.parse(id);

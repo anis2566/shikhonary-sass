@@ -4,6 +4,7 @@ import {
   useMutation,
   useQueryClient,
   useSuspenseQuery,
+  useQuery,
 } from "@tanstack/react-query";
 import { toast } from "@workspace/ui/components/sonner";
 import type {
@@ -263,7 +264,7 @@ export function useSubscriptionPlanStats() {
  */
 export function useSubscriptionPlansForSelection() {
   const trpc = useTRPC();
-  return useSuspenseQuery({
+  return useQuery({
     ...trpc.subscriptionPlan.forSelection.queryOptions(),
     select: (data) =>
       data.data as {

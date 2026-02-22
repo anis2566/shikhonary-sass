@@ -24,6 +24,19 @@ import {
   zodResolver,
 } from "@workspace/ui/components/form";
 import { Input } from "@workspace/ui/components/input";
+import { Switch } from "@workspace/ui/components/switch";
+import {
+  academicSubjectFormSchema,
+  AcademicSubjectFormValues,
+  defaultAcademicSubjectValues,
+} from "@workspace/schema";
+import { cn } from "@workspace/ui/lib/utils";
+import { Checkbox } from "@workspace/ui/components/checkbox";
+
+import {
+  useAcademicClassesForSelection,
+  useCreateAcademicSubject,
+} from "@workspace/api-client";
 import {
   Select,
   SelectContent,
@@ -31,17 +44,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select";
-import { Switch } from "@workspace/ui/components/switch";
-import {
-  academicSubjectFormSchema,
-  AcademicSubjectFormValues,
-  defaultAcademicSubjectValues,
-} from "@workspace/schema";
-
-import {
-  useAcademicClassesForSelection,
-  useCreateAcademicSubject,
-} from "@workspace/api-client";
+import { groupOptions } from "@workspace/utils";
 
 export const SubjectForm = () => {
   const router = useRouter();
@@ -59,7 +62,7 @@ export const SubjectForm = () => {
 
   useEffect(() => {
     if (classId && isFetched) {
-      form.setValue("classId", classId, {
+      form.setValue("classIds", [classId], {
         shouldValidate: true,
         shouldDirty: true,
       });
@@ -121,38 +124,67 @@ export const SubjectForm = () => {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Parent Class */}
+                {/* Parent Classes - Multi Select */}
                 <FormField
                   control={form.control}
-                  name="classId"
+                  name="classIds"
                   render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                        Class
-                      </FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        value={field.value}
-                        disabled={isPending}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="h-12 bg-background/50 border-border/50 rounded-xl px-4 focus:ring-primary/20 transition-all shadow-soft font-semibold w-full">
-                            <SelectValue placeholder="Select a class" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="rounded-xl border-border/50 shadow-medium backdrop-blur-xl bg-background/95">
-                          {classes?.map((cls) => (
-                            <SelectItem
-                              key={cls.id}
-                              value={cls.id}
-                              className="rounded-lg font-medium"
+                    <FormItem className="space-y-4 col-span-2">
+                      <div className="flex items-center justify-between">
+                        <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                          Associated Classes
+                        </FormLabel>
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] font-black uppercase tracking-widest border-primary/20 text-primary bg-primary/5"
+                        >
+                          {field.value?.length || 0} Selected
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 bg-muted/20 p-6 rounded-[2rem] border border-border/50 shadow-inner">
+                        {classes?.map((cls) => (
+                          <label
+                            key={cls.id}
+                            className={cn(
+                              "flex items-center gap-3 p-4 rounded-2xl border border-border/50 cursor-pointer transition-all hover:bg-background/80 hover:shadow-soft group",
+                              field.value?.includes(cls.id)
+                                ? "bg-background border-primary shadow-glow ring-4 ring-primary/5"
+                                : "bg-card/30",
+                            )}
+                          >
+                            <div className="relative flex items-center justify-center">
+                              <Checkbox
+                                checked={field.value?.includes(cls.id)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    field.onChange([
+                                      ...(field.value || []),
+                                      cls.id,
+                                    ]);
+                                  } else {
+                                    field.onChange(
+                                      field.value?.filter(
+                                        (id) => id !== cls.id,
+                                      ),
+                                    );
+                                  }
+                                }}
+                                className="rounded-md border-border/50 data-[state=checked]:bg-primary transition-all scale-110"
+                              />
+                            </div>
+                            <span
+                              className={cn(
+                                "text-sm font-bold truncate transition-colors",
+                                field.value?.includes(cls.id)
+                                  ? "text-primary"
+                                  : "text-foreground group-hover:text-primary/70",
+                              )}
                             >
                               {cls.displayName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                            </span>
+                          </label>
+                        ))}
+                      </div>
                       <FormMessage className="font-bold text-xs" />
                     </FormItem>
                   )}
@@ -220,6 +252,43 @@ export const SubjectForm = () => {
                           className="h-12 bg-background/50 border-border/50 rounded-xl px-4 focus:ring-primary/20 transition-all shadow-soft font-semibold"
                         />
                       </FormControl>
+                      <FormMessage className="font-bold text-xs" />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Group */}
+                <FormField
+                  control={form.control}
+                  name="group"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground/80">
+                        Group
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value ?? ""}
+                        value={field.value ?? ""}
+                        disabled={isPending}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-12 bg-background/50 border-border/50 rounded-xl px-4 focus:ring-primary/20 transition-all shadow-soft font-semibold w-full py-6">
+                            <SelectValue placeholder="Select a Group" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="rounded-xl border-border/50 shadow-medium backdrop-blur-xl bg-background/95">
+                          {groupOptions.map((subj) => (
+                            <SelectItem
+                              key={subj.value}
+                              value={subj.value.toString()}
+                              className="rounded-lg font-medium"
+                            >
+                              {subj.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage className="font-bold text-xs" />
                     </FormItem>
                   )}
