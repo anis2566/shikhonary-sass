@@ -38,6 +38,7 @@ import {
   SelectValue,
 } from "@workspace/ui/components/select";
 import { cn } from "@workspace/ui/lib/utils";
+import { parseMathString } from "@/lib/katex";
 
 import {
   useBulkCreateMCQs,
@@ -109,8 +110,10 @@ const MCQ_TYPE_OPTIONS = mcqTypeOptions.map((o) => ({
 function validateMcqEntry(mcq: Partial<MCQFormValues>): string[] {
   const errors: string[] = [];
   if (!mcq.question?.trim()) errors.push("Question is required");
-  if (!mcq.options || mcq.options.length < 2)
-    errors.push("At least 2 options required");
+  if (!mcq.options || mcq.options.length < 4)
+    errors.push("At least 4 options required");
+  if (mcq.statements && mcq.statements.length > 0 && mcq.statements.length < 3)
+    errors.push("At least 3 statements required if using statements");
   if (!mcq.answer?.trim()) errors.push("Answer is required");
   if (!mcq.type) errors.push("Type is required");
   if (!mcq.subjectId?.trim()) errors.push("Subject is required");
@@ -260,18 +263,18 @@ const McqPreviewCard: React.FC<McqCardProps> = ({
   return (
     <div
       className={cn(
-        "rounded-[1.5rem] border bg-card/40 backdrop-blur-xl overflow-hidden transition-all",
+        "rounded-[2rem] border bg-card/80 backdrop-blur-2xl overflow-hidden transition-all duration-300",
         mcq._isValid
-          ? "border-border/50 shadow-soft"
-          : "border-destructive/40 bg-destructive/5 shadow-soft",
+          ? "border-border/60 shadow-medium hover:shadow-large hover:border-primary/30"
+          : "border-destructive/30 bg-destructive/5 shadow-soft",
       )}
     >
       {/* Card header strip */}
       <div
         className={cn(
-          "px-5 py-3 flex items-center justify-between border-b",
+          "px-6 py-4 flex items-center justify-between border-b",
           mcq._isValid
-            ? "border-border/30 bg-muted/20"
+            ? "border-border/40 bg-primary/5"
             : "border-destructive/20 bg-destructive/10",
         )}
       >
@@ -367,9 +370,9 @@ const McqPreviewCard: React.FC<McqCardProps> = ({
               placeholder="No context — double-click to add"
               renderDisplay={(v) =>
                 v ? (
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap bg-muted/30 rounded-xl p-3 leading-relaxed">
-                    {v}
-                  </p>
+                  <div className="text-sm text-muted-foreground whitespace-pre-wrap bg-muted/30 rounded-xl p-3 leading-relaxed">
+                    {mcq.isMath ? parseMathString(v) : v}
+                  </div>
                 ) : null
               }
             />
@@ -387,18 +390,33 @@ const McqPreviewCard: React.FC<McqCardProps> = ({
             multiline
             placeholder="Click to write question…"
             renderDisplay={(v) => (
-              <p className="text-sm font-semibold whitespace-pre-wrap leading-relaxed text-foreground">
-                {v || "Untitled question"}
-              </p>
+              <div className="text-sm font-semibold whitespace-pre-wrap leading-relaxed text-foreground">
+                {v
+                  ? mcq.isMath
+                    ? parseMathString(v)
+                    : v
+                  : "Untitled question"}
+              </div>
             )}
           />
         </div>
 
         {/* Statements */}
         {(mcq.statements ?? []).length > 0 && (
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+          <div
+            className={cn(
+              "space-y-2 p-3 rounded-2xl transition-all",
+              (mcq.statements ?? []).length < 3 &&
+                "bg-destructive/5 border border-destructive/20 ring-1 ring-destructive/10",
+            )}
+          >
+            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center justify-between">
               Statements
+              {(mcq.statements ?? []).length < 3 && (
+                <span className="text-destructive animate-pulse">
+                  Min 3 required
+                </span>
+              )}
             </label>
             <div className="space-y-1.5 pl-1">
               {(mcq.statements ?? []).map((stmt, i) => (
@@ -412,7 +430,11 @@ const McqPreviewCard: React.FC<McqCardProps> = ({
                     className="flex-1 text-sm"
                     renderDisplay={(v) => (
                       <span className="text-sm">
-                        {v || `Statement ${i + 1}`}
+                        {v
+                          ? mcq.isMath
+                            ? parseMathString(v)
+                            : v
+                          : `Statement ${i + 1}`}
                       </span>
                     )}
                   />
@@ -437,9 +459,20 @@ const McqPreviewCard: React.FC<McqCardProps> = ({
         )}
 
         {/* Options */}
-        <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+        <div
+          className={cn(
+            "space-y-2 p-3 rounded-2xl transition-all",
+            mcq.options.length < 4 &&
+              "bg-destructive/5 border border-destructive/20 ring-1 ring-destructive/10",
+          )}
+        >
+          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center justify-between">
             Options * (click letter to set correct answer)
+            {mcq.options.length < 4 && (
+              <span className="text-destructive animate-pulse">
+                Min 4 required
+              </span>
+            )}
           </label>
           <div className="space-y-1.5 pl-1">
             {mcq.options.map((opt, i) => {
@@ -472,7 +505,11 @@ const McqPreviewCard: React.FC<McqCardProps> = ({
                           isCorrect && "text-primary font-semibold",
                         )}
                       >
-                        {v || `Option ${String.fromCharCode(65 + i)}`}
+                        {v
+                          ? mcq.isMath
+                            ? parseMathString(v)
+                            : v
+                          : `Option ${String.fromCharCode(65 + i)}`}
                       </span>
                     )}
                   />
@@ -517,6 +554,18 @@ const McqPreviewCard: React.FC<McqCardProps> = ({
             >
               <Plus className="h-3 w-3 mr-1" /> Statement
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 text-[10px] px-2 rounded-lg border-border/50 font-bold"
+              onClick={() =>
+                onUpdate(mcq._tempId, {
+                  reference: [...(mcq.reference ?? []), ""],
+                })
+              }
+            >
+              <Plus className="h-3 w-3 mr-1" /> Reference
+            </Button>
             <span className="text-[10px] text-muted-foreground/50 font-medium ml-auto">
               Double-click any field to edit
             </span>
@@ -534,7 +583,9 @@ const McqPreviewCard: React.FC<McqCardProps> = ({
             placeholder="Type or click an option letter above"
             renderDisplay={(v) =>
               v ? (
-                <span className="text-sm font-semibold text-primary">{v}</span>
+                <span className="text-sm font-semibold text-primary">
+                  {mcq.isMath ? parseMathString(v) : v}
+                </span>
               ) : (
                 <span className="text-sm text-muted-foreground/50 italic">
                   Not set — click an option letter or double-click here
@@ -563,6 +614,53 @@ const McqPreviewCard: React.FC<McqCardProps> = ({
             }
           />
         </div>
+
+        {/* References */}
+        {(mcq.reference ?? []).length > 0 && (
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+              References
+            </label>
+            <div className="flex flex-wrap gap-2 pl-1">
+              {(mcq.reference ?? []).map((ref, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-1 bg-primary/5 border border-primary/20 rounded-xl pl-2 pr-1 py-0.5"
+                >
+                  <EditableField
+                    value={ref}
+                    onSave={(v) => {
+                      const refs = [...(mcq.reference ?? [])];
+                      refs[i] = v;
+                      onUpdate(mcq._tempId, { reference: refs });
+                    }}
+                    className="h-6 min-h-0 py-0 px-2 text-[11px] border-none hover:bg-transparent"
+                    placeholder="Reference…"
+                    renderDisplay={(v) => (
+                      <span className="text-[11px] font-semibold text-primary">
+                        {v || "New Reference"}
+                      </span>
+                    )}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 shrink-0 rounded-lg text-primary/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                    onClick={() =>
+                      onUpdate(mcq._tempId, {
+                        reference: (mcq.reference ?? []).filter(
+                          (_, ri) => ri !== i,
+                        ),
+                      })
+                    }
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Session + Source */}
         <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-1 border-t border-border/30">
@@ -766,19 +864,19 @@ export const ImportMcqView: React.FC = () => {
         </Button>
 
         {/* Classification Card */}
-        <Card className="bg-card/30 backdrop-blur-xl border-border/50 rounded-[2rem] overflow-hidden shadow-medium relative">
-          <div className="absolute top-0 right-0 p-6 opacity-5">
-            <Layers className="size-20 text-primary" />
+        <Card className="bg-card/80 backdrop-blur-2xl border-border/60 rounded-[2.5rem] overflow-hidden shadow-large relative transition-all duration-500 hover:shadow-glow/5">
+          <div className="absolute top-0 right-0 p-8 opacity-10">
+            <Layers className="size-24 text-primary" />
           </div>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xl font-bold">
+          <CardHeader className="pb-4 px-8 pt-8">
+            <CardTitle className="text-2xl font-black bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
               Academic Classification
             </CardTitle>
-            <CardDescription className="font-medium">
-              This applies to all imported MCQs — required before parsing
+            <CardDescription className="font-bold text-muted-foreground/80">
+              Apply classification to all imported MCQs
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-4">
+          <CardContent className="px-8 pb-8 pt-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Subject */}
               <div className="space-y-2">
@@ -909,25 +1007,26 @@ export const ImportMcqView: React.FC = () => {
         </Card>
 
         {/* JSON Input Card */}
-        <Card className="bg-card/30 backdrop-blur-xl border-border/50 rounded-[2rem] overflow-hidden shadow-medium relative">
-          <div className="absolute top-0 right-0 p-6 opacity-5">
-            <Sparkles className="size-20 text-primary" />
+        <Card className="bg-card/80 backdrop-blur-2xl border-border/60 rounded-[2.5rem] overflow-hidden shadow-large relative transition-all duration-500">
+          <div className="absolute top-0 right-0 p-8 opacity-10">
+            <Sparkles className="size-24 text-primary" />
           </div>
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-3">
-              <div className="size-10 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
-                <FileJson className="size-5" />
+          <CardHeader className="pb-4 px-8 pt-8">
+            <div className="flex items-center gap-4">
+              <div className="size-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-glow/10">
+                <FileJson className="size-6" />
               </div>
               <div>
-                <CardTitle className="text-xl font-bold">JSON Input</CardTitle>
-                <CardDescription className="font-medium">
-                  Paste an array of MCQ objects — classification fields are set
-                  above
+                <CardTitle className="text-2xl font-black bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  JSON Input
+                </CardTitle>
+                <CardDescription className="font-bold text-muted-foreground/80">
+                  Paste your MCQ array to begin the import process
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-4 space-y-4">
+          <CardContent className="px-8 pb-8 pt-2 space-y-6">
             <div className="flex gap-2 flex-wrap">
               <Button
                 variant="outline"

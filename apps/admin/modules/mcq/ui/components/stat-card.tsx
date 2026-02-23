@@ -15,22 +15,23 @@ function StatsCard({ title, value, icon: Icon, className }: StatsCardProps) {
   return (
     <div
       className={cn(
-        "bg-card/50 backdrop-blur-md rounded-2xl border border-border/50 p-5 lg:p-6 transition-all duration-300",
-        "hover:shadow-glow hover:border-primary/20",
+        "bg-card/80 backdrop-blur-2xl rounded-[2rem] border border-border/60 p-6 lg:p-8 transition-all duration-300",
+        "hover:shadow-large hover:border-primary/30 group relative overflow-hidden",
         className,
       )}
     >
+      <div className="absolute -right-4 -bottom-4 size-24 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
       <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">
+        <div className="space-y-1 relative z-10">
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2">
             {title}
           </p>
-          <p className="text-3xl lg:text-4xl font-black text-foreground tracking-tight">
+          <p className="text-4xl lg:text-5xl font-black text-foreground tracking-tighter bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
             {value}
           </p>
         </div>
-        <div className="p-3 bg-primary/10 rounded-xl text-primary shadow-soft">
-          <Icon className="h-6 w-6" />
+        <div className="p-4 bg-primary/10 rounded-[1.25rem] text-primary shadow-glow/5 group-hover:scale-110 transition-transform duration-500 relative z-10">
+          <Icon className="h-7 w-7" />
         </div>
       </div>
     </div>

@@ -23,6 +23,7 @@ import {
   Copy,
 } from "lucide-react";
 import Link from "next/link";
+import { parseMathString } from "@/lib/katex";
 
 import { Badge } from "@workspace/ui/components/badge";
 import { Checkbox } from "@workspace/ui/components/checkbox";
@@ -112,42 +113,44 @@ function OptionItem({
   option,
   index,
   isCorrect,
+  isMath,
 }: {
   option: string;
   index: number;
   isCorrect: boolean;
+  isMath?: boolean;
 }) {
   const letter = String.fromCharCode(65 + index); // A, B, C, D...
 
   return (
     <div
       className={cn(
-        "flex items-start gap-2 p-2 rounded-md text-sm transition-colors",
+        "flex items-start gap-3 p-3 rounded-xl text-sm transition-all duration-300",
         isCorrect
-          ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
-          : "bg-muted/50",
+          ? "bg-primary/5 border border-primary/20 shadow-soft ring-1 ring-primary/5"
+          : "bg-muted/10 border border-transparent hover:border-border/60 hover:bg-muted/20",
       )}
     >
       <span
         className={cn(
-          "flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
+          "flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black transition-transform duration-300",
           isCorrect
-            ? "bg-green-500 text-white"
-            : "bg-muted-foreground/20 text-muted-foreground",
+            ? "bg-primary text-primary-foreground scale-110 shadow-glow/20"
+            : "bg-muted-foreground/10 text-muted-foreground group-hover:scale-105",
         )}
       >
         {letter}
       </span>
       <span
         className={cn(
-          "flex-1 text-sm",
-          isCorrect && "font-medium text-green-700 dark:text-green-400",
+          "flex-1 text-sm leading-relaxed pt-0.5",
+          isCorrect && "font-bold text-primary",
         )}
       >
-        {option}
+        {isMath ? parseMathString(option) : option}
       </span>
       {isCorrect && (
-        <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+        <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
       )}
     </div>
   );
@@ -169,11 +172,13 @@ export const McqCard = React.memo(function McqCard({
   return (
     <div
       className={cn(
-        "bg-card/40 backdrop-blur-xl rounded-3xl border border-border/50 overflow-hidden shadow-soft transition-all hover:shadow-medium hover:border-primary/20 group",
-        selected && "ring-2 ring-primary border-primary/40",
-        !mcq.isActive && "opacity-60",
+        "bg-card/90 backdrop-blur-2xl rounded-[2rem] border border-border/60 overflow-hidden shadow-medium transition-all duration-300 hover:shadow-large hover:border-primary/30 group relative",
+        selected && "ring-2 ring-primary border-primary/50 shadow-glow/10",
+        !mcq.isActive && "opacity-75 grayscale-[0.3]",
       )}
     >
+      {/* Subtle top gradient */}
+      <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-transparent via-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
       {/* Header */}
       <div className="p-5 pb-4">
         <div className="flex items-start gap-3">
@@ -221,9 +226,9 @@ export const McqCard = React.memo(function McqCard({
             </div>
 
             {/* Question */}
-            <p className="font-semibold text-foreground leading-relaxed text-sm">
-              {mcq.question}
-            </p>
+            <div className="font-semibold text-foreground leading-relaxed text-sm">
+              {mcq.isMath ? parseMathString(mcq.question) : mcq.question}
+            </div>
           </div>
 
           {/* Actions */}
@@ -308,9 +313,9 @@ export const McqCard = React.memo(function McqCard({
       <div className="px-5 pb-5 space-y-4">
         {/* Context */}
         {mcq.context && (
-          <div className="p-3 bg-muted/50 rounded-xl border border-border/40">
-            <div className="flex items-center gap-2 mb-1 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-              <FileText className="w-3 h-3" />
+          <div className="p-4 bg-muted/40 backdrop-blur-sm rounded-2xl border border-border/40 shadow-inner/5">
+            <div className="flex items-center gap-2 mb-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+              <FileText className="w-3.5 h-3.5" />
               Context
               {mcq.contextUrl && (
                 <TooltipProvider>
@@ -330,27 +335,31 @@ export const McqCard = React.memo(function McqCard({
                 </TooltipProvider>
               )}
             </div>
-            <p className="text-sm text-muted-foreground">{mcq.context}</p>
+            <div className="text-sm text-muted-foreground">
+              {mcq.isMath ? parseMathString(mcq.context) : mcq.context}
+            </div>
           </div>
         )}
 
         {/* Statements */}
         {statements.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-              <MessageSquare className="w-3 h-3" />
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+              <MessageSquare className="w-3.5 h-3.5" />
               Statements
             </div>
             <div className="space-y-1">
               {statements.map((statement, idx) => (
                 <div
                   key={idx}
-                  className="flex items-start gap-2 text-sm p-2 bg-muted/30 rounded-lg"
+                  className="flex items-start gap-3 text-sm p-3 bg-muted/20 backdrop-blur-sm rounded-xl border border-border/30 hover:bg-muted/30 transition-colors"
                 >
-                  <span className="font-bold text-muted-foreground">
+                  <span className="font-black text-primary/60 text-xs mt-0.5">
                     {idx + 1}.
                   </span>
-                  <span>{statement}</span>
+                  <span className="leading-relaxed">
+                    {mcq.isMath ? parseMathString(statement) : statement}
+                  </span>
                 </div>
               ))}
             </div>
@@ -390,6 +399,7 @@ export const McqCard = React.memo(function McqCard({
                   option === mcq.answer ||
                   String.fromCharCode(65 + idx) === mcq.answer
                 }
+                isMath={mcq.isMath}
               />
             ))}
           </div>
@@ -397,12 +407,12 @@ export const McqCard = React.memo(function McqCard({
 
         {/* Explanation */}
         {mcq.explanation && (
-          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-            <div className="flex items-center gap-2 mb-1 text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">
-              <BookOpen className="w-3 h-3" />
+          <div className="p-4 bg-primary/5 backdrop-blur-sm rounded-2xl border border-primary/10 shadow-inner/5">
+            <div className="flex items-center gap-2 mb-2 text-[10px] font-black text-primary uppercase tracking-widest">
+              <BookOpen className="w-3.5 h-3.5" />
               Explanation
             </div>
-            <p className="text-sm text-blue-600 dark:text-blue-300">
+            <p className="text-sm text-foreground/80 leading-relaxed italic">
               {mcq.explanation}
             </p>
           </div>
@@ -424,24 +434,36 @@ export const McqCard = React.memo(function McqCard({
         )}
 
         {/* Hierarchy tags */}
-        <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-border/40">
+        <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-border/40">
           {mcq.subject?.displayName && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge
+              variant="secondary"
+              className="text-[10px] font-bold px-2.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-all"
+            >
               {mcq.subject.displayName}
             </Badge>
           )}
           {mcq.chapter?.displayName && (
-            <Badge variant="outline" className="text-xs">
+            <Badge
+              variant="outline"
+              className="text-[10px] font-bold px-2.5 border-border/60 hover:bg-muted/50 transition-all"
+            >
               {mcq.chapter.displayName}
             </Badge>
           )}
           {mcq.topic?.displayName && (
-            <Badge variant="outline" className="text-xs bg-muted/50">
+            <Badge
+              variant="outline"
+              className="text-[10px] font-bold px-2.5 border-border/40 bg-muted/30 text-muted-foreground/80"
+            >
               {mcq.topic.displayName}
             </Badge>
           )}
           {mcq.subtopic?.displayName && (
-            <Badge variant="outline" className="text-xs bg-muted/30">
+            <Badge
+              variant="outline"
+              className="text-[10px] font-bold px-2.5 border-border/30 bg-muted/20 text-muted-foreground/60"
+            >
               {mcq.subtopic.displayName}
             </Badge>
           )}

@@ -62,32 +62,37 @@ export const McqsView = () => {
   };
 
   return (
-    <div className="min-h-screen p-4 space-y-6 text-foreground">
+    <div className="min-h-screen p-6 lg:p-8 space-y-10 text-foreground animate-in fade-in duration-700">
       {/* Stats */}
       <McqListStat />
 
-      <div className="flex flex-col gap-6">
-        {/* Filter */}
-        <Filter setSelectedIds={setSelectedIds} isLoading={isLoading} />
+      <div className="flex flex-col gap-10">
+        {/* Filter & Actions Section */}
+        <div className="space-y-6">
+          <Filter setSelectedIds={setSelectedIds} isLoading={isLoading} />
 
-        {/* Bulk Actions */}
-        <BulkActions
-          selectedCount={selectedIds.length}
-          setSelectedIds={setSelectedIds}
-          onBulkDelete={handleBulkDelete}
-          isLoading={isLoading}
-        />
+          <BulkActions
+            selectedCount={selectedIds.length}
+            setSelectedIds={setSelectedIds}
+            onBulkDelete={handleBulkDelete}
+            isLoading={isLoading}
+          />
+        </div>
 
         {/* Cards Grid */}
         {mcqs.length === 0 ? (
-          <div className="bg-card/40 backdrop-blur-xl rounded-3xl border border-dashed border-border/50 p-12 text-center shadow-soft">
-            <div className="size-16 bg-muted/50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-border/50">
-              <span className="text-3xl">🤔</span>
+          <div className="bg-card/80 backdrop-blur-2xl rounded-[3rem] border border-dashed border-border/60 p-20 text-center shadow-medium transition-all duration-500 hover:border-primary/30">
+            <div className="size-24 bg-primary/5 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 border border-primary/10 shadow-inner group transition-transform duration-500 hover:rotate-12">
+              <span className="text-5xl group-hover:scale-110 transition-transform cursor-default">
+                🤔
+              </span>
             </div>
-            <h3 className="text-lg font-bold text-foreground">No MCQs Found</h3>
-            <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
+            <h3 className="text-3xl font-black bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
+              No MCQs Found
+            </h3>
+            <p className="text-base text-muted-foreground/80 mt-3 max-w-sm mx-auto font-medium leading-relaxed">
               We couldn&apos;t find any MCQs matching your criteria. Try
-              adjusting your filters or create a new one.
+              adjusting filters or create a new entry to get started.
             </p>
           </div>
         ) : (
